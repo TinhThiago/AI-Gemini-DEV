@@ -1,0 +1,8 @@
+<!-- Test Case: Calendar Horizontal Scroll -->
+<!-- Steps: -->
+<!-- 1. Mở HTML_Booking.html trong trình duyệt. -->
+<!-- 2. Thu nhỏ chiều rộng cửa sổ trình duyệt để `.calendar-week` bị tràn (nhỏ hơn 800px hoặc đủ nhỏ để các ngày bị khuất). -->
+<!-- 3. Di chuyển con trỏ chuột vào khu vực lịch và thử cuộn ngang. -->
+<!-- Expected Result: Thanh cuộn ngang xuất hiện ở dưới cùng của `.calendar-grid-container`, cho phép người dùng cuộn để xem tất cả các ngày trong tuần. -->
+<!-- 4. Phóng to cửa sổ trình duyệt trở lại. -->
+<!-- Expected Result: Thanh cuộn ngang biến mất khi có đủ không gian để hiển thị tất cả các ngày.

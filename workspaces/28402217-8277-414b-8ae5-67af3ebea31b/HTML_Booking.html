@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meeting Room Booking</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        :root {
+            --primary-color: #3492ab;
+            --primary-dark: #2a768a;
+            --bg-color: #f4f7f6;
+            --card-bg: #ffffff;
+            --text-color: #333333;
+            --text-secondary: #666666;
+            --border-color: #e0e0e0;
+            --error-color: #e74c3c;
+            --success-color: #2ecc71;
+            --warning-color: #f39c12;
+            --shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* --- Header --- */
+        header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 10px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            flex-shrink: 0;
+            height: 60px;
+        }
+
+        header h1 {
+            font-size: 1.2rem;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            white-space: nowrap;
+            margin-right: 20px;
+            flex-shrink: 0;
+        }
+
+        .marquee-container {
+            flex: 1;
+            overflow: hidden;
+            position: relative;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            mask-image: linear-gradient(to right, transparent, black 20px, black 95%, transparent);
+            -webkit-mask-image: linear-gradient(to right, transparent, black 20px, black 95%, transparent);
+        }
+
+        .marquee-text {
+            position: absolute;
+            white-space: nowrap;
+            will-change: transform;
+            animation: marquee 60s linear infinite;
+            animation-delay: -5s;
+            font-size: 0.9rem;
+            display: flex;
+            gap: 40px;
+        }
+
+        .marquee-container:hover .marquee-text {
+            animation-play-state: paused;
+            cursor: default;
+        }
+
+        @keyframes marquee {
+            0% {
+                transform: translateX(100vw);
+            }
+
+            100% {
+                transform: translateX(-100%);
+            }
+        }
+
+        /* --- Layout --- */
+        .container {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+            height: 100%;
+        }
+
+        .left-panel {
+            width: 320px;
+            background: var(--card-bg);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 0;
+        }
+
+        .right-panel {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        /* --- Components --- */
+        .panel-header {
+            padding: 15px;
+            border-bottom: 1px solid var(--border-color);
+            font-weight: 500;
+            color: var(--primary-color);
+        }
+
+        .filter-section {
+            padding: 10px 15px;
+            background: #fafafa;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .filter-select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-family: inherit;
+        }
+
+        .room-list-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px;
+        }
+
+        .location-group {
+            margin-bottom: 15px;
+        }
+
+        .location-title {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+            padding-left: 5px;
+            border-left: 3px solid var(--primary-color);
+        }
+
+        .room-card {
+            background: white;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 12px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .room-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow);
+            border-color: var(--primary-color);
+        }
+
+        .room-card.active {
+            background-color: #eaf6f9;
+            border-color: var(--primary-color);
+        }
+
+        .room-info h3 {
+            font-size: 1rem;
+            margin-bottom: 4px;
+        }
+
+        .room-meta {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            display: flex;
+            gap: 10px;
+        }
+
+        /* Form */
+        .booking-form-card {
+            background: var(--card-bg);
+            border-radius: 8px;
+            padding: 15px 20px;
+            box-shadow: var(--shadow);
+            flex-shrink: 0;
+        }
+        
+        .form-group {
+            margin-bottom: 10px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
+
+        .form-group input[type="text"],
+        .form-group input[type="datetime-local"],
+        .form-group select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-family: inherit;
+        }
+        
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background-color 0.2s;
+            font-size: 0.9rem;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-dark);
+        }
+
+        .no-results {
+            text-align: center;
+            color: var(--text-secondary);
+            padding: 20px;
+            font-style: italic;
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <h1><i class="fas fa-calendar-alt"></i> Meeting Room Booking</h1>
+        <div class="marquee-container">
+            <div class="marquee-text">
+                <span>Welcome to the Meeting Room Booking System!</span>
+                <span>Check room availability and book your next meeting with ease.</span>
+                <span>Please make sure to book in advance.</span>
+                <span>Enjoy a productive meeting!</span>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <aside class="left-panel">
+            <div class="panel-header">Filters</div>
+            <div class="filter-section">
+                <div class="form-group">
+                    <label for="booking-date">Date:</label>
+                    <input type="date" id="booking-date" class="filter-select">
+                </div>
+                <div class="form-group">
+                    <label for="booking-time">Time:</label>
+                    <input type="time" id="booking-time" class="filter-select">
+                </div>
+                <button class="btn-primary" onclick="filterRooms()">Filter</button>
+            </div>
+            <div class="panel-header">Meeting Rooms</div>
+            <div class="room-list-container">
+                <div class="location-group">
+                    <div class="location-title">Floor 1</div>
+                    <div class="room-card active" data-room-id="101">
+                        <div class="room-info">
+                            <h3>Room 101</h3>
+                            <div class="room-meta">
+                                <span>Capacity: 8</span>
+                                <span>Projector</span>
+                            </div>
+                        </div>
+                        <i class="fas fa-chevron-right"></i>
+                    </div>
+                    <div class="room-card" data-room-id="102">
+                        <div class="room-info">
+                            <h3>Room 102</h3>
+                            <div class="room-meta">
+                                <span>Capacity: 12</span>
+                                <span>Whiteboard</span>
+                            </div>
+                        </div>
+                        <i class="fas fa-chevron-right"></i>
+                    </div>
+                </div>
+                <div class="location-group">
+                    <div class="location-title">Floor 2</div>
+                    <div class="room-card" data-room-id="201">
+                        <div class="room-info">
+                            <h3>Room 201</h3>
+                            <div class="room-meta">
+                                <span>Capacity: 6</span>
+                                <span></span>
+                            </div>
+                        </div>
+                        <i class="fas fa-chevron-right"></i>
+                    </div>
+                    <div class="room-card" data-room-id="202">
+                        <div class="room-info">
+                            <h3>Room 202</h3>
+                            <div class="room-meta">
+                                <span>Capacity: 10</span>
+                                <span>Projector, Whiteboard</span>
+                            </div>
+                        </div>
+                        <i class="fas fa-chevron-right"></i>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <main class="right-panel">
+            <div class="booking-form-card">
+                <div class="panel-header">Book a Room</div>
+                <div id="selected-room-info">
+                    Please select a room from the list.
+                </div>
+                <form id="booking-form">
+                    <div class="form-group">
+                        <label for="booking-room-name">Room:</label>
+                        <input type="text" id="booking-room-name" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label for="booking-guest-name">Your Name:</label>
+                        <input type="text" id="booking-guest-name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="booking-start-time">Start Time:</label>
+                        <input type="datetime-local" id="booking-start-time" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="booking-end-time">End Time:</label>
+                        <input type="datetime-local" id="booking-end-time" required>
+                    </div>
+                    <button type="button" class="btn-primary" onclick="submitBooking()">Book Now</button>
+                </form>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        const roomCards = document.querySelectorAll('.room-card');
+        const selectedRoomInfoDiv = document.getElementById('selected-room-info');
+        const bookingRoomNameInput = document.getElementById('booking-room-name');
+        const bookingStartTimeInput = document.getElementById('booking-start-time');
+        const bookingEndTimeInput = document.getElementById('booking-end-time');
+        const filterDateInput = document.getElementById('booking-date');
+        const filterTimeInput = document.getElementById('booking-time');
+        
+        // Sample room data (in a real app, this would come from a server)
+        const rooms = [
+            { id: '101', name: 'Room 101', location: 'Floor 1', capacity: 8, features: ['Projector'] },
+            { id: '102', name: 'Room 102', location: 'Floor 1', capacity: 12, features: ['Whiteboard'] },
+            { id: '201', name: 'Room 201', location: 'Floor 2', capacity: 6, features: [] },
+            { id: '202', name: 'Room 202', location: 'Floor 2', capacity: 10, features: ['Projector', 'Whiteboard'] }
+        ];
+
+        // Function to update the selected room info and booking form
+        function selectRoom(roomId) {
+            const selectedRoom = rooms.find(room => room.id === roomId);
+            if (selectedRoom) {
+                bookingRoomNameInput.value = `${selectedRoom.name} (${selectedRoom.location})`;
+                selectedRoomInfoDiv.innerHTML = `<h3>${selectedRoom.name}</h3><p>${selectedRoom.location}</p><p>Capacity: ${selectedRoom.capacity}</p><p>Features: ${selectedRoom.features.join(', ')}</p>`;
+                
+                // Set default booking times based on filter or current time if filter is empty
+                const selectedDate = filterDateInput.value;
+                const selectedTime = filterTimeInput.value;
+
+                let defaultStartTime = '';
+                let defaultEndTime = '';
+
+                if (selectedDate && selectedTime) {
+                    // Combine date and time for start
+                    defaultStartTime = `${selectedDate}T${selectedTime}`;
+                    // Set end time 1 hour after start time
+                    const startTime = new Date(`${selectedDate}T${selectedTime}:00`);
+                    startTime.setHours(startTime.getHours() + 1);
+                    const endHours = startTime.getHours().toString().padStart(2, '0');
+                    const endMinutes = startTime.getMinutes().toString().padStart(2, '0');
+                    defaultEndTime = `${selectedDate}T${endHours}:${endMinutes}`;
+                } else {
+                    // Use current date and time if filters are not set
+                    const now = new Date();
+                    const currentHours = now.getHours().toString().padStart(2, '0');
+                    const currentMinutes = now.getMinutes().toString().padStart(2, '0');
+                    defaultStartTime = `${now.getFullYear()}-${(now.getMonth()+1).toString().padStart(2, '0')}-${now.getDate().toString().padStart(2, '0')}T${currentHours}:${currentMinutes}`;
+                    now.setHours(now.getHours() + 1);
+                    const endHours = now.getHours().toString().padStart(2, '0');
+                    const endMinutes = now.getMinutes().toString().padStart(2, '0');
+                    defaultEndTime = `${now.getFullYear()}-${(now.getMonth()+1).toString().padStart(2, '0')}-${now.getDate().toString().padStart(2, '0')}T${endHours}:${endMinutes}`;
+                }
+                
+                bookingStartTimeInput.value = defaultStartTime;
+                bookingEndTimeInput.value = defaultEndTime;
+
+                // Highlight active room card
+                document.querySelectorAll('.room-card').forEach(card => card.classList.remove('active'));
+                event.currentTarget.classList.add('active');
+            }
+        }
+
+        // Function to submit the booking
+        function submitBooking() {
+            const roomName = bookingRoomNameInput.value;
+            const guestName = document.getElementById('booking-guest-name').value;
+            const startTime = bookingStartTimeInput.value;
+            const endTime = bookingEndTimeInput.value;
+
+            if (!roomName || !guestName || !startTime || !endTime) {
+                alert('Please fill in all booking details.');
+                return;
+            }
+            
+            // Basic validation for start and end times
+            if (new Date(startTime) >= new Date(endTime)) {
+                alert('End time must be after start time.');
+                return;
+            }
+
+            alert(`Booking successful!\nRoom: ${roomName}\nName: ${guestName}\nStart: ${new Date(startTime).toLocaleString()}\nEnd: ${new Date(endTime).toLocaleString()}`);
+            
+            // In a real application, send this data to a server
+            console.log({ roomName, guestName, startTime, endTime });
+
+            // Reset form or clear selection
+            document.getElementById('booking-form').reset();
+            selectedRoomInfoDiv.innerHTML = 'Please select a room from the list.';
+            document.querySelectorAll('.room-card').forEach(card => card.classList.remove('active'));
+        }
+
+        // Function to filter rooms (Placeholder - needs actual filtering logic)
+        function filterRooms() {
+            const selectedDate = filterDateInput.value;
+            const selectedTime = filterTimeInput.value;
+            
+            // **Placeholder for actual filtering logic**
+            // In a real scenario, you would fetch available rooms based on selectedDate and selectedTime
+            // For now, we'll just log the values and show a message
+            console.log(`Filtering rooms for date: ${selectedDate}, time: ${selectedTime}`);
+            
+            const roomListContainer = document.querySelector('.room-list-container');
+            roomListContainer.innerHTML = ''; // Clear current list
+            
+            let foundRooms = false;
+            if (selectedDate && selectedTime) {
+                // Dummy filtering: Assume all rooms are potentially available for demonstration
+                // In a real app, you'd check against a booking schedule
+                rooms.forEach(room => {
+                    const roomElement = document.createElement('div');
+                    roomElement.classList.add('room-card');
+                    roomElement.setAttribute('data-room-id', room.id);
+                    roomElement.onclick = (e) => { selectRoom(room.id); e.stopPropagation(); }; // Add click handler
+                    roomElement.innerHTML = `
+                        <div class="room-info">
+                            <h3>${room.name}</h3>
+                            <div class="room-meta">
+                                <span>Capacity: ${room.capacity}</span>
+                                <span>${room.features.join(', ')}</span>
+                            </div>
+                        </div>
+                        <i class="fas fa-chevron-right"></i>
+                    `;
+                    roomListContainer.appendChild(roomElement);
+                    foundRooms = true;
+                });
+            }
+
+            if (!foundRooms) {
+                roomListContainer.innerHTML = '<p class="no-results">No rooms available for the selected criteria.</p>';
+            }
+            
+            // Reset room selection when filters are applied
+            bookingRoomNameInput.value = '';
+            selectedRoomInfoDiv.innerHTML = 'Please select a room from the list.';
+            document.querySelectorAll('.room-card').forEach(card => card.classList.remove('active'));
+        }
+
+        // Initial setup: Add click listeners to room cards
+        document.addEventListener('DOMContentLoaded', () => {
+            roomCards.forEach(card => {
+                card.addEventListener('click', (event) => {
+                    const roomId = event.currentTarget.getAttribute('data-room-id');
+                    selectRoom(roomId, event);
+                });
+            });
+            
+            // Set default date and time filters to current date and a reasonable start time
+            const today = new Date().toISOString().split('T')[0];
+            filterDateInput.value = today;
+            
+            const now = new Date();
+            const currentHour = now.getHours().toString().padStart(2, '0');
+            const nextHour = (now.getHours() + 1).toString().padStart(2, '0'); // Suggest booking for next hour
+            const minutes = now.getMinutes().toString().padStart(2, '0');
+            filterTimeInput.value = `${currentHour}:${minutes}`;
+            
+            // Trigger initial filter to show rooms for today
+            filterRooms(); 
+        });
+    </script>
+</body>
+
+</html>

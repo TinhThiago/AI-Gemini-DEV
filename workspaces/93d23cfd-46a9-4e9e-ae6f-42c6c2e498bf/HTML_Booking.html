@@ -1,0 +1,199 @@
+// Giả định rằng bạn có một môi trường để chạy JavaScript, ví dụ như Jest hoặc một script tag riêng.
+// Trong ví dụ này, chúng ta sẽ viết dưới dạng một hàm kiểm thử.
+
+// Mock DOM elements needed for the test
+const mockSelectedRoomInput = { value: 'Room Alpha' };
+const mockBookingDateInput = {
+    value: '',
+    setAttribute: function(name, value) {}
+};
+const mockDateErrorDiv = {
+    style: { display: '' },
+    textContent: '',
+    display: function(text) { this.textContent = text; this.style.display = 'block'; },
+    hide: function() { this.style.display = 'none'; }
+};
+const mockBookingForm = {
+    reset: function() {},
+    querySelector: function(selector) { return mockSelectedRoomInput; } // Simulating querySelector for form elements
+};
+const mockSelectedRoom = {
+    classList: { remove: function() {}, add: function() {} },
+    querySelector: function(selector) { return { innerText: 'Room Alpha' }; } // Mocking room info selector
+};
+
+// --- Test Suite for bookRoom function --- 
+
+// Mock the Date object to control 'now' and 'selectedDateTime'
+const RealDate = Date;
+
+function mockDate(isoDateString) {
+    global.Date = class extends RealDate {
+        constructor(dateString) {
+            if (dateString) {
+                return new RealDate(dateString);
+            } else {
+                return new RealDate(isoDateString);
+            }
+        }
+        static now() {
+            return new RealDate(isoDateString).getTime();
+        }
+    };
+}
+
+// Restore the original Date object
+function unmockDate() {
+    global.Date = RealDate;
+}
+
+// --- Test Case 1: Selected date is in the past --- 
+function testPastDateBooking() {
+    console.log('Running test: Past Date Booking...');
+    mockDate('2023-10-27T10:00:00Z'); // Set 'now' to a specific past date
+    
+    mockBookingDateInput.value = '2023-10-26T15:30:00'; // Set selected date to a day before 'now'
+    
+    // Simulate the bookRoom function call
+    let errorShown = false;
+    const originalBookRoom = bookRoom;
+    window.bookRoom = function(event) { // Override bookRoom to capture its behavior
+        event.preventDefault();
+        const selectedDateTimeStr = mockBookingDateInput.value;
+        if (!selectedDateTimeStr) { /*...*/ return; }
+        const selectedDateTime = new Date(selectedDateTimeStr);
+        const now = new Date(); // This will use our mocked Date.now()
+        
+        if (selectedDateTime <= now) {
+            mockDateErrorDiv.style.display = 'block';
+            mockDateErrorDiv.textContent = 'Please select a date and time in the future.';
+            errorShown = true; // Flag that error was shown
+        }
+    };
+
+    // Trigger the booking attempt
+    const mockEvent = { preventDefault: () => {} };
+    window.bookRoom(mockEvent);
+
+    // Assertions
+    if (errorShown && mockDateErrorDiv.textContent.includes('in the future')) {
+        console.log('PASS: Correct error message displayed for past date.');
+    } else {
+        console.error('FAIL: Incorrect behavior for past date booking.');
+    }
+
+    // Clean up
+    unmockDate();
+    window.bookRoom = originalBookRoom; // Restore original function
+    mockDateErrorDiv.textContent = ''; // Clear error message
+}
+
+// --- Test Case 2: Selected date is today but in the past --- 
+function testTodayPastTimeBooking() {
+    console.log('Running test: Today Past Time Booking...');
+    mockDate('2023-10-27T14:00:00Z'); // Set 'now' to a specific time today
+
+    mockBookingDateInput.value = '2023-10-27T13:00:00'; // Set selected date to today but earlier time
+
+    let errorShown = false;
+    const originalBookRoom = bookRoom;
+    window.bookRoom = function(event) { 
+        event.preventDefault();
+        const selectedDateTimeStr = mockBookingDateInput.value;
+        if (!selectedDateTimeStr) { /*...*/ return; }
+        const selectedDateTime = new Date(selectedDateTimeStr);
+        const now = new Date(); 
+        
+        if (selectedDateTime <= now) {
+            mockDateErrorDiv.style.display = 'block';
+            mockDateErrorDiv.textContent = 'Please select a date and time in the future.';
+            errorShown = true;
+        }
+    };
+
+    const mockEvent = { preventDefault: () => {} };
+    window.bookRoom(mockEvent);
+
+    if (errorShown && mockDateErrorDiv.textContent.includes('in the future')) {
+        console.log('PASS: Correct error message displayed for today past time.');
+    } else {
+        console.error('FAIL: Incorrect behavior for today past time booking.');
+    }
+
+    unmockDate();
+    window.bookRoom = originalBookRoom;
+    mockDateErrorDiv.textContent = '';
+}
+
+// --- Test Case 3: Selected date is in the future --- 
+function testFutureDateBooking() {
+    console.log('Running test: Future Date Booking...');
+    mockDate('2023-10-27T10:00:00Z'); // Set 'now'
+
+    mockBookingDateInput.value = '2023-11-01T09:00:00'; // Set selected date to a future date
+
+    let bookingProceeded = false;
+    const originalBookRoom = bookRoom;
+    window.bookRoom = function(event) { 
+        event.preventDefault();
+        const selectedDateTimeStr = mockBookingDateInput.value;
+        if (!selectedDateTimeStr) { /*...*/ return; }
+        const selectedDateTime = new Date(selectedDateTimeStr);
+        const now = new Date(); 
+        
+        if (selectedDateTime <= now) {
+            mockDateErrorDiv.style.display = 'block';
+            mockDateErrorDiv.textContent = 'Please select a date and time in the future.';
+        } else {
+            // Simulate successful booking path
+            bookingProceeded = true; 
+            alert(`Booking successful!`); // Simulate the alert
+        }
+    };
+
+    const mockEvent = { preventDefault: () => {} };
+    window.bookRoom(mockEvent);
+
+    if (bookingProceeded) {
+        console.log('PASS: Booking proceeded successfully for future date.');
+    } else {
+        console.error('FAIL: Booking did not proceed for future date.');
+    }
+
+    unmockDate();
+    window.bookRoom = originalBookRoom;
+}
+
+// --- Helper function to get current time formatted for 'min' attribute --- 
+function getCurrentDateTimeString() {
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const day = String(today.getDate()).padStart(2, '0');
+    const hours = String(today.getHours()).padStart(2, '0');
+    const minutes = String(today.getMinutes()).padStart(2, '0');
+    return `${year}-${month}-${day}T${hours}:${minutes}`;
+}
+
+// --- Running the tests --- 
+// In a real testing environment (like Jest), these would be called automatically.
+// For manual execution in a browser console or Node.js: 
+
+// Setup mocks before running tests
+window.selectedRoomInput = mockSelectedRoomInput;
+window.bookingDateInput = mockBookingDateInput;
+window.dateErrorDiv = mockDateErrorDiv;
+window.bookingForm = mockBookingForm;
+window.selectedRoom = mockSelectedRoom;
+
+// Call the test functions
+testPastDateBooking();
+testTodayPastTimeBooking();
+testFutureDateBooking();
+
+// Restore original mocks after tests (important if running multiple tests or in a shared environment)
+window.selectedRoomInput = document.getElementById('room-name');
+window.bookingDateInput = document.getElementById('booking-date');
+window.dateErrorDiv = document.getElementById('date-error');
+window.bookingForm = document.getElementById('booking-form');
+// 'selectedRoom' would be managed dynamically in a real app

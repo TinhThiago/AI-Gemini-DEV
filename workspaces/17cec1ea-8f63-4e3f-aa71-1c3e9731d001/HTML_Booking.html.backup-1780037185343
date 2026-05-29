@@ -1,0 +1,7 @@
+<!-- Test Case: Tooltip Label Contrast Ratio -->
+<!-- Steps: -->
+<!-- 1. Mở HTML_Booking.html trong trình duyệt. -->
+<!-- 2. Di chuyển chuột qua một sự kiện trong lịch để hiển thị tooltip. -->
+<!-- 3. Sử dụng công cụ kiểm tra màu sắc (ví dụ: Color Contrast Analyzer, hoặc trình kiểm tra trong Developer Tools của trình duyệt). -->
+<!-- 4. Kiểm tra tỷ lệ tương phản giữa màu chữ của các nhãn (`.tooltip-label`, màu: #cbd5e0) và màu nền của tooltip (`.event-tooltip`, màu: #2d3748). -->
+<!-- Expected Result: Tỷ lệ tương phản phải đạt ít nhất 4.5:1 (WCAG AA) để đảm bảo khả năng đọc tốt.

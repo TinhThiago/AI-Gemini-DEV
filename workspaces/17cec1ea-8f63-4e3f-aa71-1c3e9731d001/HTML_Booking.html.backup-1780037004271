@@ -1,0 +1,9 @@
+<!-- Test Case: Button Type Validation -->
+<!-- Steps: -->
+<!-- 1. Mở HTML_Booking.html trong trình duyệt. -->
+<!-- 2. Điền một vài dữ liệu vào form 'Book Meeting'. -->
+<!-- 3. Mở Developer Tools (Ctrl+Shift+I hoặc F12) và chuyển sang tab 'Console'. -->
+<!-- 4. Nhấn nút 'Cancel'. -->
+<!-- Expected Result: Form không được gửi (không có reload trang hoặc thông báo lỗi gửi form). Thông báo 'Form cancelled.' sẽ xuất hiện trong console (do script demo). -->
+<!-- 5. Nhấn nút 'Book Now'. -->
+<!-- Expected Result: Form được gửi (sẽ có alert 'Booking request sent...' do script demo, sau đó mô phỏng tải và hiển thị toast). Trang không reload mà vẫn ở nguyên vị trí.

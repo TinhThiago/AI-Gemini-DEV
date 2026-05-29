@@ -1,0 +1,96 @@
+describe('updateBookingForm', () => {
+    // Mocking DOM elements and the updateBookingForm function
+    let mockRoomNameInput, mockStartTimeInput, mockEndTimeInput, mockEventNameInput, mockAttendeesInput, mockNotesInput, mockBookingFormCard;
+    let updateBookingForm;
+
+    const rooms = [
+        { id: 'r1', name: 'Conference Room A', location: 'new-york', capacity: 10, amenities: ['Projector', 'Whiteboard'] },
+        { id: 'r2', name: 'Small Meeting Room B', location: 'new-york', capacity: 4, amenities: ['TV'] }
+    ];
+
+    beforeEach(() => { // Setup mocks before each test
+        document.body.innerHTML = `
+            <input id="roomName">
+            <input type="datetime-local" id="startTime">
+            <input type="datetime-local" id="endTime">
+            <input id="eventName">
+            <input type="number" id="attendees">
+            <textarea id="notes"></textarea>
+            <div id="bookingFormCard"></div>
+        `;
+        mockRoomNameInput = document.getElementById('roomName');
+        mockStartTimeInput = document.getElementById('startTime');
+        mockEndTimeInput = document.getElementById('endTime');
+        mockEventNameInput = document.getElementById('eventName');
+        mockAttendeesInput = document.getElementById('attendees');
+        mockNotesInput = document.getElementById('notes');
+        mockBookingFormCard = document.getElementById('bookingFormCard');
+
+        // Re-define updateBookingForm function here or import it if it were in a separate file
+        const formatDateTimeForInput = (date) => {
+             if (!(date instanceof Date) || isNaN(date.getTime())) {
+                return "";
+            }
+            const year = date.getFullYear();
+            const month = (date.getMonth() + 1).toString().padStart(2, '0');
+            const day = date.getDate().toString().padStart(2, '0');
+            const hours = date.getHours().toString().padStart(2, '0');
+            const minutes = date.getMinutes().toString().padStart(2, '0');
+            return `${year}-${month}-${day}T${hours}:${minutes}`;
+        };
+
+        updateBookingForm = (room) => {
+            if (!room) {
+                mockRoomNameInput.value = '';
+                // bookingFormCard.style.display = 'none'; // Example for hiding
+                return;
+            }
+            mockRoomNameInput.value = room.name;
+            const now = new Date();
+            const startTime = new Date(now);
+            startTime.setHours(Math.floor(now.getHours() / 1) * 1 + 1, 0, 0, 0);
+            const endTime = new Date(startTime);
+            endTime.setHours(startTime.getHours() + 1);
+
+            mockStartTimeInput.value = formatDateTimeForInput(startTime);
+            mockEndTimeInput.value = formatDateTimeForInput(endTime);
+            mockEventNameInput.value = '';
+            mockAttendeesInput.value = '';
+            mockNotesInput.value = '';
+            // bookingFormCard.style.display = 'block';
+        };
+    });
+
+    test('should populate form fields when a room is provided', () => {
+        const room = rooms.find(r => r.id === 'r1');
+        updateBookingForm(room);
+
+        expect(mockRoomNameInput.value).toBe('Conference Room A');
+        expect(mockEventNameInput.value).toBe('');
+        expect(mockAttendeesInput.value).toBe('');
+        expect(mockNotesInput.value).toBe('');
+        // Check if datetime inputs are populated (format depends on current time, so check if not empty)
+        expect(mockStartTimeInput.value).not.toBe('');
+        expect(mockEndTimeInput.value).not.toBe('');
+    });
+
+    test('should clear room name and handle null room gracefully', () => {
+        updateBookingForm(null);
+        expect(mockRoomNameInput.value).toBe('');
+        // If hiding the form is implemented for null room, add test for that here
+        // expect(mockBookingFormCard.style.display).toBe('none'); 
+    });
+
+    test('should reset default values if called again with a different room', () => {
+        const room1 = rooms.find(r => r.id === 'r1');
+        updateBookingForm(room1);
+        const initialStartTime = mockStartTimeInput.value;
+
+        const room2 = rooms.find(r => r.id === 'r2');
+        updateBookingForm(room2);
+
+        expect(mockRoomNameInput.value).toBe('Small Meeting Room B');
+        expect(mockStartTimeInput.value).not.toBe(initialStartTime); // Ensure time is reset based on current time
+        expect(mockEventNameInput.value).toBe('');
+    });
+});

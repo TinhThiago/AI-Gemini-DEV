@@ -1,0 +1,8 @@
+<!-- Test Case: Form Label Accessibility -->
+<!-- Steps: -->
+<!-- 1. Mở HTML_Booking.html trong trình duyệt. -->
+<!-- 2. Sử dụng công cụ kiểm tra khả năng tiếp cận (ví dụ: trình đọc màn hình hoặc tiện ích mở rộng như Axe DevTools). -->
+<!-- 3. Di chuyển đến phần form 'Book Meeting'. -->
+<!-- 4. Kiểm tra từng trường nhập liệu (Meeting Title, Attendees, Date, Start Time, End Time, Recurring Meeting checkbox, Frequency, Repeat Until, Description) để đảm bảo rằng khi nhãn được focus hoặc click, trường nhập liệu tương ứng cũng được focus. -->
+<!-- 5. Đối với bộ lọc 'Filter by Location', kiểm tra xem nhãn 'sr-only' có được đọc bởi trình đọc màn hình hay không. -->
+<!-- Expected Result: Tất cả các trường nhập liệu đều được liên kết đúng với nhãn của chúng, cải thiện trải nghiệm cho người dùng trình đọc màn hình. Nhãn 'sr-only' cho bộ lọc địa điểm được trình đọc màn hình đọc to nhưng không hiển thị trực quan.

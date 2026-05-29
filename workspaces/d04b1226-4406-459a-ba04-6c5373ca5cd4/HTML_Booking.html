@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meeting Room Booking</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        :root {
+            --primary-color: #3492ab;
+            --primary-dark: #2a768a;
+            --bg-color: #f4f7f6;
+            --card-bg: #ffffff;
+            --text-color: #333333;
+            --text-secondary: #666666;
+            --border-color: #e0e0e0;
+            --error-color: #e74c3c;
+            --success-color: #2ecc71;
+            --warning-color: #f39c12;
+            --shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden; /* Giữ overflow:hidden ở body */
+        }
+
+        /* --- Header --- */
+        header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 10px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            flex-shrink: 0;
+            height: 60px;
+        }
+
+        header h1 {
+            font-size: 1.2rem;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            white-space: nowrap;
+            margin-right: 20px;
+            flex-shrink: 0;
+        }
+
+        .marquee-container {
+            flex: 1;
+            overflow: hidden;
+            position: relative;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            /* Mask nhẹ nhàng hơn */
+            mask-image: linear-gradient(to right, transparent, black 50px, black 90%, transparent);
+            -webkit-mask-image: linear-gradient(to right, transparent, black 50px, black 90%, transparent);
+        }
+
+        .marquee-text {
+            position: absolute;
+            white-space: nowrap;
+            will-change: transform;
+            animation: marquee 60s linear infinite;
+            animation-delay: -3s; /* Giảm delay để bắt đầu mượt hơn */
+            animation-fill-mode: forwards; /* Giữ lại trạng thái cuối */
+            font-size: 0.9rem;
+            display: flex;
+            gap: 40px;
+            padding-left: 10px; /* Thêm padding để text không bị cắt cụt đột ngột */
+            padding-right: 10px;
+        }
+
+        .marquee-container:hover .marquee-text {
+            animation-play-state: paused;
+            cursor: default;
+        }
+
+        @keyframes marquee {
+            0% {
+                transform: translateX(100%); /* Bắt đầu từ ngoài màn hình bên phải */
+            }
+            100% {
+                transform: translateX(-100%); /* Kết thúc ngoài màn hình bên trái */
+            }
+        }
+
+        /* --- Layout --- */
+        .container {
+            display: flex;
+            flex: 1;
+            overflow: hidden; /* Container chính không cuộn */
+            height: 100%;
+        }
+
+        .left-panel {
+            width: 320px;
+            background: var(--card-bg);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 0; /* Giữ nguyên độ rộng ban đầu, nhưng cần cẩn trọng trên màn hình nhỏ */
+            min-width: 200px; /* Đặt min-width để tránh bị quá nhỏ */
+        }
+
+        .right-panel {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto; /* Vùng cuộn chính cho nội dung */
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        /* --- Components --- */
+        .panel-header {
+            padding: 15px;
+            border-bottom: 1px solid var(--border-color);
+            font-weight: 500;
+            color: var(--primary-color);
+        }
+
+        .filter-section {
+            padding: 10px 15px;
+            background: #fafafa;
+            border-bottom: 1px solid var(--border-color);
+            flex-shrink: 0;
+        }
+
+        .filter-select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-family: inherit;
+        }
+
+        .room-list-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px;
+        }
+
+        .location-group {
+            margin-bottom: 15px;
+        }
+
+        .location-title {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+            padding-left: 5px;
+            border-left: 3px solid var(--primary-color);
+        }
+
+        .room-card {
+            background: white;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 12px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .room-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow);
+            border-color: var(--primary-color);
+        }
+
+        .room-card.active {
+            background-color: #eaf6f9;
+            border-color: var(--primary-color);
+        }
+
+        .room-info h3 {
+            font-size: 1rem;
+            margin-bottom: 4px;
+        }
+
+        .room-meta {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            display: flex;
+            gap: 10px;
+        }
+
+        /* Form */
+        .booking-form-card {
+            background: var(--card-bg);
+            border-radius: 8px;
+            padding: 15px 20px;
+            box-shadow: var(--shadow);
+            flex-shrink: 0;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
+                overflow-y: auto; /* Cho phép cuộn body trên màn hình nhỏ */
+            }
+            .left-panel {
+                width: 100%;
+                height: auto; /* Chiều cao tự động */
+                border-right: none;
+                border-bottom: 1px solid var(--border-color);
+            }
+            .right-panel {
+                height: auto; /* Chiều cao tự động */
+            }
+            header h1 {
+                font-size: 1rem;
+                margin-right: 10px;
+            }
+            .marquee-container {
+                display: none; /* Ẩn marquee trên màn hình nhỏ */
+            }
+        }
+
+        @media (max-width: 480px) {
+            header {
+                padding: 10px;
+            }
+            header h1 {
+                font-size: 1rem;
+            }
+            .right-panel {
+                padding: 15px;
+            }
+            .booking-form-card {
+                padding: 10px 15px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <h1><i class="fas fa-calendar-alt"></i> Meeting Room Booking</h1>
+        <div class="marquee-container">
+            <div class="marquee-text">
+                <span><i class="fas fa-info-circle"></i> Room A - Max 10 people, Projector available.</span>
+                <span><i class="fas fa-info-circle"></i> Room B - Max 6 people, Whiteboard.</span>
+                <span><i class="fas fa-info-circle"></i> Room C - Max 15 people, Video Conference system.</span>
+                <span><i class="fas fa-info-circle"></i> Room D - Max 8 people, Flexible seating.</span>
+                <span><i class="fas fa-info-circle"></i> Room E - Max 4 people, Quiet zone.</span>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="left-panel">
+            <div class="panel-header">Locations</div>
+            <div class="filter-section">
+                <select id="locationFilter" class="filter-select">
+                    <option value="all">All Locations</option>
+                    <option value="floor1">Floor 1</option>
+                    <option value="floor2">Floor 2</option>
+                    <option value="floor3">Floor 3</option>
+                </select>
+            </div>
+            <div class="room-list-container">
+                <div class="location-group" id="floor1">
+                    <div class="location-title">Floor 1</div>
+                    <div class="room-card" data-room-id="101">
+                        <div class="room-info">
+                            <h3>Room 101</h3>
+                            <div class="room-meta">
+                                <span><i class="fas fa-user"></i> 8</span>
+                                <span><i class="fas fa-video"></i> Yes</span>
+                            </div>
+                        </div>
+                        <i class="fas fa-chevron-right"></i>
+                    </div>
+                    <div class="room-card" data-room-id="102">
+                        <div class="room-info">
+                            <h3>Room 102</h3>
+                            <div class="room-meta">
+                                <span><i class="fas fa-user"></i> 12</span>
+                                <span><i class="fas fa-projector"></i> Yes</span>
+                            </div>
+                        </div>
+                        <i class="fas fa-chevron-right"></i>
+                    </div>
+                </div>
+                <div class="location-group" id="floor2">
+                    <div class="location-title">Floor 2</div>
+                    <div class="room-card" data-room-id="201">
+                        <div class="room-info">
+                            <h3>Room 201</h3>
+                            <div class="room-meta">
+                                <span><i class="fas fa-user"></i> 6</span>
+                                <span><i class="fas fa-chalkboard"></i> Yes</span>
+                            </div>
+                        </div>
+                        <i class="fas fa-chevron-right"></i>
+                    </div>
+                    <div class="room-card" data-room-id="202">
+                        <div class="room-info">
+                            <h3>Room 202</h3>
+                            <div class="room-meta">
+                                <span><i class="fas fa-user"></i> 10</span>
+                                <span><i class="fas fa-video"></i> Yes</span>
+                            </div>
+                        </div>
+                        <i class="fas fa-chevron-right"></i>
+                    </div>
+                </div>
+                <div class="location-group" id="floor3">
+                    <div class="location-title">Floor 3</div>
+                    <div class="room-card" data-room-id="301">
+                        <div class="room-info">
+                            <h3>Room 301</h3>
+                            <div class="room-meta">
+                                <span><i class="fas fa-user"></i> 20</span>
+                                <span><i class="fas fa-users"></i> Yes</span>
+                            </div>
+                        </div>
+                        <i class="fas fa-chevron-right"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="right-panel">
+            <div class="booking-form-card">
+                <h2 style="margin-bottom: 15px; color: var(--primary-color);">Book Room</h2>
+                <div style="margin-bottom: 10px;">
+                    <label for="selectedRoomName">Selected Room:</label>
+                    <input type="text" id="selectedRoomName" readonly style="width: calc(100% - 120px); padding: 8px; border: 1px solid var(--border-color); border-radius: 4px; background-color: #f9f9f9;">
+                </div>
+                <div style="margin-bottom: 10px;">
+                    <label for="bookingDate">Date:</label>
+                    <input type="date" id="bookingDate" class="filter-select" style="width: 150px;">
+                </div>
+                <div style="margin-bottom: 10px;">
+                    <label for="startTime">Start Time:</label>
+                    <input type="time" id="startTime" class="filter-select" style="width: 150px;">
+                </div>
+                <div style="margin-bottom: 10px;">
+                    <label for="endTime">End Time:</label>
+                    <input type="time" id="endTime" class="filter-select" style="width: 150px;">
+                </div>
+                <div style="margin-bottom: 10px;">
+                    <label for="bookingPurpose">Purpose:</label>
+                    <textarea id="bookingPurpose" rows="3" class="filter-select" style="resize: vertical;"></textarea>
+                </div>
+                <button id="bookButton" style="padding: 10px 20px; background-color: var(--primary-color); color: white; border: none; border-radius: 4px; cursor: pointer; transition: background-color 0.2s;">Book Now</button>
+                <div id="bookingMessage" style="margin-top: 10px; color: var(--text-secondary);"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- Data --- 
+        const rooms = [
+            { id: 101, name: 'Room 101', location: 'floor1', capacity: 8, features: ['Projector'] },
+            { id: 102, name: 'Room 102', location: 'floor1', capacity: 12, features: ['Projector'] },
+            { id: 201, name: 'Room 201', location: 'floor2', capacity: 6, features: ['Whiteboard'] },
+            { id: 202, name: 'Room 202', location: 'floor2', capacity: 10, features: ['Projector', 'Video Conference'] },
+            { id: 301, name: 'Room 301', location: 'floor3', capacity: 20, features: ['Video Conference', 'Large Screen'] }
+        ];
+
+        // --- State --- 
+        let selectedRoomId = null;
+        let selectedRoomName = '';
+
+        // --- DOM Elements ---
+        const locationFilter = document.getElementById('locationFilter');
+        const roomListContainer = document.querySelector('.room-list-container');
+        const selectedRoomNameInput = document.getElementById('selectedRoomName');
+        const bookingDateInput = document.getElementById('bookingDate');
+        const startTimeInput = document.getElementById('startTime');
+        const endTimeInput = document.getElementById('endTime');
+        const bookingPurposeInput = document.getElementById('bookingPurpose');
+        const bookButton = document.getElementById('bookButton');
+        const bookingMessage = document.getElementById('bookingMessage');
+
+        // --- Functions ---
+        function renderRoomList(filteredRooms) {
+            roomListContainer.innerHTML = ''; // Clear previous list
+            const roomsByLocation = {};
+
+            filteredRooms.forEach(room => {
+                if (!roomsByLocation[room.location]) {
+                    roomsByLocation[room.location] = [];
+                }
+                roomsByLocation[room.location].push(room);
+            });
+
+            for (const location in roomsByLocation) {
+                const locationGroup = document.createElement('div');
+                locationGroup.className = 'location-group';
+                locationGroup.id = location;
+
+                const locationTitle = document.createElement('div');
+                locationTitle.className = 'location-title';
+                locationTitle.textContent = location.replace('floor', 'Floor ').toUpperCase();
+                locationGroup.appendChild(locationTitle);
+
+                roomsByLocation[location].forEach(room => {
+                    const roomCard = document.createElement('div');
+                    roomCard.className = 'room-card';
+                    roomCard.dataset.roomId = room.id;
+
+                    // Add active class if this room is selected
+                    if (selectedRoomId === room.id) {
+                        roomCard.classList.add('active');
+                    }
+
+                    const roomInfo = document.createElement('div');
+                    roomInfo.className = 'room-info';
+
+                    const roomName = document.createElement('h3');
+                    roomName.textContent = room.name;
+                    roomInfo.appendChild(roomName);
+
+                    const roomMeta = document.createElement('div');
+                    roomMeta.className = 'room-meta';
+                    const capacitySpan = document.createElement('span');
+                    capacitySpan.innerHTML = `<i class='fas fa-user'></i> ${room.capacity}`;
+                    roomMeta.appendChild(capacitySpan);
+
+                    room.features.forEach(feature => {
+                        const featureSpan = document.createElement('span');
+                        let icon = '';
+                        switch(feature) {
+                            case 'Projector': icon = 'fa-projector'; break;
+                            case 'Whiteboard': icon = 'fa-chalkboard'; break;
+                            case 'Video Conference': icon = 'fa-video'; break;
+                            case 'Large Screen': icon = 'fa-display'; break;
+                            default: icon = 'fa-info-circle';
+                        }
+                        featureSpan.innerHTML = `<i class='fas ${icon}'></i> ${feature}`;
+                        roomMeta.appendChild(featureSpan);
+                    });
+
+                    roomInfo.appendChild(roomMeta);
+                    roomCard.appendChild(roomInfo);
+
+                    const arrowIcon = document.createElement('i');
+                    arrowIcon.className = 'fas fa-chevron-right';
+                    roomCard.appendChild(arrowIcon);
+
+                    roomCard.addEventListener('click', () => {
+                        selectRoom(room.id, room.name);
+                    });
+
+                    locationGroup.appendChild(roomCard);
+                });
+                roomListContainer.appendChild(locationGroup);
+            }
+        }
+
+        function selectRoom(roomId, roomName) {
+            selectedRoomId = roomId;
+            selectedRoomName = roomName;
+            selectedRoomNameInput.value = roomName;
+            renderRoomList(rooms);
+            // Scroll to the selected room if it's not visible
+            const selectedCard = roomListContainer.querySelector(`.room-card[data-room-id='${roomId}']`);
+            if (selectedCard) {
+                 selectedCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        }
+
+        function filterRooms() {
+            const selectedLocation = locationFilter.value;
+            let filtered = rooms;
+            if (selectedLocation !== 'all') {
+                filtered = rooms.filter(room => room.location === selectedLocation);
+            }
+            renderRoomList(filtered);
+        }
+
+        function handleBooking() {
+            const date = bookingDateInput.value;
+            const startTime = startTimeInput.value;
+            const endTime = endTimeInput.value;
+            const purpose = bookingPurposeInput.value;
+
+            // --- Basic Validation ---
+            if (!selectedRoomId) {
+                bookingMessage.textContent = 'Please select a room first.';
+                bookingMessage.style.color = 'var(--error-color)';
+                return;
+            }
+            if (!date || !startTime || !endTime) {
+                bookingMessage.textContent = 'Please fill in date and time.';
+                bookingMessage.style.color = 'var(--error-color)';
+                return;
+            }
+
+            // Convert times to minutes for easier comparison
+            const [startHour, startMinute] = startTime.split(':').map(Number);
+            const [endHour, endMinute] = endTime.split(':').map(Number);
+            const startTimeInMinutes = startHour * 60 + startMinute;
+            const endTimeInMinutes = endHour * 60 + endMinute;
+
+            if (endTimeInMinutes <= startTimeInMinutes) {
+                bookingMessage.textContent = 'End time must be after start time.';
+                bookingMessage.style.color = 'var(--error-color)';
+                return;
+            }
+            
+            // In a real application, you would send this data to a server
+            console.log('Booking Details:', {
+                roomId: selectedRoomId,
+                roomName: selectedRoomName,
+                date: date,
+                startTime: startTime,
+                endTime: endTime,
+                purpose: purpose
+            });
+
+            // Simulate successful booking
+            bookingMessage.textContent = `Room ${selectedRoomName} booked successfully for ${date} from ${startTime} to ${endTime}.`;
+            bookingMessage.style.color = 'var(--success-color)';
+            
+            // Optionally reset form or clear selection
+            // selectedRoomId = null;
+            // selectedRoomName = '';
+            // selectedRoomNameInput.value = '';
+            // bookingDateInput.value = '';
+            // startTimeInput.value = '';
+            // endTimeInput.value = '';
+            // bookingPurposeInput.value = '';
+            // renderRoomList(rooms); // Re-render to clear active state
+        }
+
+        // --- Event Listeners ---
+        locationFilter.addEventListener('change', filterRooms);
+        bookButton.addEventListener('click', handleBooking);
+
+        // --- Initial Render ---
+        // Set default date to today
+        bookingDateInput.valueAsDate = new Date();
+        // Set default start time to next hour (e.g., if current time is 10:30, set to 11:00)
+        const now = new Date();
+        const nextHour = now.getHours() + 1;
+        const startMinutes = Math.ceil(now.getMinutes() / 15) * 15; // Round up to nearest 15 mins
+        const startHourFormatted = nextHour < 10 ? '0' + nextHour : nextHour;
+        const startMinutesFormatted = startMinutes < 10 ? '0' + startMinutes : startMinutes;
+        startTimeInput.value = `${startHourFormatted}:${startMinutesFormatted}`;
+
+        // Set default end time to 1 hour after start time
+        const endHourNum = nextHour + 1;
+        const endHourFormatted = endHourNum < 10 ? '0' + endHourNum : endHourNum;
+        endTimeInput.value = `${endHourFormatted}:${startMinutesFormatted}`;
+        
+        filterRooms(); // Initial render of all rooms
+    </script>
+</body>
+
+</html>

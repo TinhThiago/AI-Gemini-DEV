@@ -1,0 +1,1556 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meeting Room Booking</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        :root {
+            --primary-color: #3492ab;
+            --primary-dark: #2a768a;
+            --bg-color: #f4f7f6;
+            --card-bg: #ffffff;
+            --text-color: #333333;
+            --text-secondary: #666666;
+            --border-color: #e0e0e0;
+            --error-color: #e74c3c;
+            --success-color: #2ecc71;
+            --warning-color: #f39c12;
+            --shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* --- Header --- */
+        header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 10px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            flex-shrink: 0;
+            height: 60px;
+        }
+
+        header h1 {
+            font-size: 1.2rem;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            white-space: nowrap;
+            margin-right: 20px;
+            flex-shrink: 0;
+        }
+
+        .marquee-container {
+            flex: 1;
+            overflow: hidden;
+            position: relative;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            mask-image: linear-gradient(to right, transparent, black 20px, black 95%, transparent);
+            -webkit-mask-image: linear-gradient(to right, transparent, black 20px, black 95%, transparent);
+        }
+
+        .marquee-text {
+            position: absolute;
+            white-space: nowrap;
+            will-change: transform;
+            animation: marquee 60s linear infinite;
+            animation-delay: -5s;
+            font-size: 0.9rem;
+            display: flex;
+            gap: 40px;
+        }
+
+        .marquee-container:hover .marquee-text {
+            animation-play-state: paused;
+            cursor: default;
+        }
+
+        @keyframes marquee {
+            0% {
+                transform: translateX(100vw);
+            }
+
+            100% {
+                transform: translateX(-100%);
+            }
+        }
+
+        /* --- Layout --- */
+        .container {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+            height: 100%;
+        }
+
+        .left-panel {
+            width: 320px;
+            background: var(--card-bg);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 0;
+        }
+
+        .right-panel {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        /* --- Components --- */
+        .panel-header {
+            padding: 15px;
+            border-bottom: 1px solid var(--border-color);
+            font-weight: 500;
+            color: var(--primary-color);
+        }
+
+        .filter-section {
+            padding: 10px 15px;
+            background: #fafafa;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .filter-select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-family: inherit;
+        }
+
+        .room-list-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px;
+        }
+
+        .location-group {
+            margin-bottom: 15px;
+        }
+
+        .location-title {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+            padding-left: 5px;
+            border-left: 3px solid var(--primary-color);
+        }
+
+        .room-card {
+            background: white;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 12px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .room-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow);
+            border-color: var(--primary-color);
+        }
+
+        .room-card.active {
+            background-color: #eaf6f9;
+            border-color: var(--primary-color);
+        }
+
+        .room-info h3 {
+            font-size: 1rem;
+            margin-bottom: 4px;
+        }
+
+        .room-meta {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            display: flex;
+            gap: 10px;
+        }
+
+        /* Form */
+        .booking-form-card {
+            background: var(--card-bg);
+            border-radius: 8px;
+            padding: 15px 20px;
+            box-shadow: var(--shadow);
+            flex-shrink: 0;
+        }
+
+        .form-title {
+            margin-bottom: 10px;
+            font-size: 1.1rem;
+            color: var(--primary-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .selected-room-badge {
+            background: var(--primary-color);
+            color: white;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            margin-left: 10px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr 1fr;
+            gap: 10px;
+        }
+
+        .form-col-2 {
+            grid-column: span 2;
+        }
+
+        .form-col-4 {
+            grid-column: span 4;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.8rem;
+            margin-bottom: 3px;
+            color: var(--text-secondary);
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-family: inherit;
+            font-size: 0.9rem;
+            min-height: 38px; /* Added min-height for consistency */
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+
+        textarea.form-control {
+            resize: vertical; /* Changed from none to vertical */
+            height: auto; /* Let content define height, min-height is set above */
+            min-height: 38px; /* Ensure minimum height */
+        }
+
+        .btn-submit {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 500;
+            width: 100%;
+            margin-top: 5px;
+            transition: background 0.2s;
+        }
+
+        .btn-submit:hover {
+            background: var(--primary-dark);
+        }
+
+        .btn-submit:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .btn-submit.btn-update {
+            background: var(--warning-color);
+        }
+
+        .btn-cancel {
+            background: #95a5a6;
+            color: white;
+            border: none;
+            padding: 4px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            margin-left: 10px;
+            display: none;
+        }
+
+        /* Recurring Options Styling */
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            color: var(--primary-color);
+            font-weight: 500;
+            margin-top: 5px;
+            user-select: none;
+        }
+
+        .recurring-options {
+            display: none;
+            grid-column: span 4;
+            background: #f8f9fa;
+            border: 1px dashed #ced4da;
+            padding: 12px;
+            border-radius: 6px;
+            margin-top: 5px;
+        }
+
+        .recurring-options.show {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 15px;
+            align-items: end;
+        }
+
+        .recurring-options .form-group {
+            margin-bottom: 0;
+        }
+
+        /* Calendar */
+        .calendar-section {
+            background: var(--card-bg);
+            border-radius: 8px;
+            box-shadow: var(--shadow);
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            min-height: 400px;
+        }
+
+        .calendar-header {
+            padding: 10px 20px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .calendar-nav {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .calendar-nav button {
+            background: none;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 5px 10px;
+            cursor: pointer;
+            color: var(--text-secondary);
+            height: 32px; /* Kept fixed height for consistency */
+            display: flex; /* Added to center content */
+            align-items: center; /* Added to center content */
+            justify-content: center; /* Added to center content */
+        }
+
+        .calendar-nav button:hover {
+            background: #f0f0f0;
+            color: var(--primary-color);
+        }
+
+        .calendar-nav input[type="date"] {
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 4px 8px;
+            font-family: inherit;
+            color: var(--text-color);
+            height: 32px;
+            cursor: pointer;
+        }
+
+        .calendar-nav input[type="date"]:hover {
+            border-color: #bbb;
+        }
+
+        .calendar-title {
+            font-weight: 500;
+            font-size: 0.95rem;
+            color: var(--text-secondary);
+            margin-left: 5px;
+        }
+
+        .calendar-grid-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px;
+        }
+
+        .calendar-week {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 10px;
+            min-width: 800px;
+            padding-bottom: 10px;
+        }
+
+        .day-column {
+            background: #fafafa;
+            border: 1px solid #eee;
+            border-radius: 6px;
+            min-height: 200px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .day-column.today {
+            background: #eaf6f9;
+            border-color: #bce0e9;
+        }
+
+        .day-header {
+            padding: 8px;
+            text-align: center;
+            border-bottom: 1px solid #eee;
+            background: rgba(255, 255, 255, 0.5);
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .day-header .date-num {
+            display: block;
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+
+        .day-body {
+            flex: 1;
+            padding: 5px;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        /* Event & Tooltip */
+        .event-card {
+            background: white;
+            border-left: 3px solid var(--primary-color);
+            padding: 6px 8px;
+            border-radius: 4px;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+            font-size: 0.75rem;
+            cursor: pointer;
+            position: relative;
+            transition: transform 0.1s;
+        }
+
+        .event-card:hover {
+            transform: scale(1.02);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            z-index: 10;
+        }
+
+        .event-tooltip {
+            visibility: hidden;
+            width: 260px;
+            background-color: #2d3748;
+            color: #fff;
+            text-align: left;
+            border-radius: 6px;
+            padding: 12px;
+            position: absolute;
+            z-index: 9999;
+            top: 100%;
+            margin-top: 5px;
+            left: 5px;
+            opacity: 0;
+            transition: opacity 0.2s, visibility 0.2s;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+            font-size: 0.8rem;
+            line-height: 1.4;
+            pointer-events: auto;
+        }
+
+        .event-tooltip::after {
+            content: "";
+            position: absolute;
+            bottom: 100%;
+            left: 20px;
+            margin-left: -6px;
+            border-width: 6px;
+            border-style: solid;
+            border-color: transparent transparent #2d3748 transparent;
+        }
+
+        .event-card:hover .event-tooltip {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        .tooltip-row {
+            margin-bottom: 6px;
+        }
+
+        .tooltip-label {
+            color: #a0aec0;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            font-weight: bold;
+            display: block;
+            margin-bottom: 2px;
+        }
+
+        .tooltip-value {
+            display: block;
+            word-wrap: break-word;
+        }
+
+        .tooltip-actions {
+            margin-top: 10px;
+            padding-top: 8px;
+            border-top: 1px solid #4a5568;
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn-tool {
+            padding: 4px 10px;
+            border-radius: 3px;
+            border: none;
+            font-size: 0.75rem;
+            cursor: pointer;
+            color: white;
+            flex: 1;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+        }
+
+        .btn-tool-edit {
+            background-color: #3182ce;
+        }
+
+        .btn-tool-edit:hover {
+            background-color: #2b6cb0;
+        }
+
+        .btn-tool-del {
+            background-color: #e53e3e;
+        }
+
+        .btn-tool-del:hover {
+            background-color: #c53030;
+        }
+
+        .btn-tool-copy {
+            background-color: #38a169;
+        }
+
+        .btn-tool-copy:hover {
+            background-color: #2f855a;
+        }
+
+        .event-time {
+            font-weight: bold;
+            color: var(--text-color);
+            margin-bottom: 2px;
+            display: block;
+        }
+
+        .event-title {
+            color: var(--text-secondary);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: block;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            border-radius: 4px;
+            color: white;
+            font-weight: 500;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.3s;
+            z-index: 1000;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .toast.success {
+            background-color: var(--success-color);
+        }
+
+        .toast.error {
+            background-color: var(--error-color);
+        }
+
+        .toast.warning {
+            background-color: var(--warning-color);
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .loading-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.8);
+            display: none; /* Initially hidden */
+            justify-content: center;
+            align-items: center;
+            z-index: 999;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid var(--primary-color);
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 30px;
+            color: var(--text-secondary);
+            grid-column: span 7;
+        }
+
+        .multi-select {
+            position: relative;
+            width: 100%;
+        }
+
+        .multi-select-header {
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 8px 10px;
+            background: white;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .multi-select-header:focus {
+             outline: none;
+             border-color: var(--primary-color);
+        }
+
+        .multi-select-options {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 1px solid var(--border-color);
+            border-top: none;
+            border-radius: 0 0 4px 4px;
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 10;
+            display: none; /* Hidden by default */
+        }
+
+        .multi-select-options.show {
+            display: block;
+        }
+
+        .multi-select-option {
+            padding: 8px 10px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .multi-select-option:hover {
+            background: #f0f0f0;
+        }
+
+        .multi-select-option input[type="checkbox"] {
+            cursor: pointer;
+        }
+
+    </style>
+</head>
+
+<body>
+    <header>
+        <h1><i class="fas fa-calendar-alt"></i> Meeting Room Booking</h1>
+        <div class="marquee-container">
+            <div class="marquee-text">
+                <span>Welcome to the Meeting Room Booking System! Book your room easily.</span>
+                <span>Check availability and book your next meeting with ease.</span>
+                <span>Remember to check the room details before booking.</span>
+                <span>Need assistance? Contact support.</span>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <aside class="left-panel">
+            <div class="panel-header">Locations</div>
+            <div class="filter-section">
+                <label for="locationFilter" class="visually-hidden">Filter by Location</label>
+                <select id="locationFilter" class="filter-select">
+                    <option value="all">All Locations</option>
+                    <option value="new-york">New York</option>
+                    <option value="london">London</option>
+                    <option value="tokyo">Tokyo</option>
+                </select>
+            </div>
+            <div class="room-list-container">
+                <!-- Room list will be populated here by JavaScript -->
+                <div class="location-group">
+                    <div class="location-title">New York</div>
+                    <div class="room-card" data-room-id="ny001">
+                        <div class="room-info">
+                            <h3>Conference Room A</h3>
+                            <div class="room-meta">
+                                <span>Capacity: 10</span>
+                                <span>Projector</span>
+                            </div>
+                        </div>
+                        <i class="fas fa-chevron-right"></i>
+                    </div>
+                    <div class="room-card" data-room-id="ny002">
+                        <div class="room-info">
+                            <h3>Meeting Room B</h3>
+                            <div class="room-meta">
+                                <span>Capacity: 6</span>
+                            </div>
+                        </div>
+                        <i class="fas fa-chevron-right"></i>
+                    </div>
+                </div>
+                <div class="location-group">
+                    <div class="location-title">London</div>
+                    <div class="room-card" data-room-id="lon001">
+                        <div class="room-info">
+                            <h3>The Boardroom</h3>
+                            <div class="room-meta">
+                                <span>Capacity: 12</span>
+                                <span>Whiteboard</span>
+                            </div>
+                        </div>
+                        <i class="fas fa-chevron-right"></i>
+                    </div>
+                </div>
+                 <div class="location-group">
+                    <div class="location-title">Tokyo</div>
+                    <div class="room-card" data-room-id="tky001">
+                        <div class="room-info">
+                            <h3>Huddle Space 1</h3>
+                            <div class="room-meta">
+                                <span>Capacity: 4</span>
+                            </div>
+                        </div>
+                        <i class="fas fa-chevron-right"></i>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <main class="right-panel">
+            <div class="booking-form-card">
+                <div class="form-title">
+                    <span>Book a Room</span>
+                    <span id="selected-room-badge" class="selected-room-badge" style="display: none;"></span>
+                </div>
+                <form id="bookingForm" class="form-grid">
+                    <input type="hidden" id="bookingId" name="bookingId">
+                    
+                    <div class="form-group form-col-2">
+                        <label for="bookingSubject">Subject</label>
+                        <input type="text" id="bookingSubject" name="subject" class="form-control" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="bookingStartTime">Start Time</label>
+                        <input type="datetime-local" id="bookingStartTime" name="startTime" class="form-control" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="bookingEndTime">End Time</label>
+                        <input type="datetime-local" id="bookingEndTime" name="endTime" class="form-control" required>
+                    </div>
+
+                    <div class="form-group form-col-4">
+                        <label for="bookingAttendees">Attendees (Optional)</label>
+                        <input type="text" id="bookingAttendees" name="attendees" class="form-control" placeholder="Enter email addresses separated by commas">
+                    </div>
+
+                    <div class="form-group form-col-4">
+                        <label for="bookingDescription">Description (Optional)</label>
+                        <textarea id="bookingDescription" name="description" class="form-control" rows="2" placeholder="Briefly describe the meeting purpose"></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="roomSelect" class="visually-hidden">Select Room</label>
+                        <div class="multi-select">
+                            <div id="roomSelectHeader" class="multi-select-header" tabindex="0">
+                                Select Room(s)
+                                <i class="fas fa-caret-down"></i>
+                            </div>
+                            <div id="roomSelectOptions" class="multi-select-options">
+                                <!-- Room options will be populated here -->
+                            </div>
+                        </div>
+                         <input type="hidden" id="selectedRoomIds" name="selectedRoomIds">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="isRecurring">
+                            Recurring Booking
+                        </label>
+                    </div>
+
+                    <div id="recurringOptions" class="recurring-options">
+                        <div class="form-group">
+                            <label for="recurringFrequency">Frequency</label>
+                            <select id="recurringFrequency" name="recurringFrequency" class="filter-select">
+                                <option value="daily">Daily</option>
+                                <option value="weekly">Weekly</option>
+                                <option value="monthly">Monthly</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="recurringEndDate">End Date</label>
+                            <input type="date" id="recurringEndDate" name="recurringEndDate" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label for="recurringCount">Number of Occurrences</label>
+                            <input type="number" id="recurringCount" name="recurringCount" min="1" class="form-control">
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn-submit">Book Room</button>
+                    <button type="button" id="btnCancelUpdate" class="btn-cancel">Cancel Update</button>
+                    <button type="button" id="btnUpdateBooking" class="btn-submit btn-update" style="display: none;">Update Booking</button>
+                </form>
+            </div>
+
+            <div class="calendar-section">
+                <div class="calendar-header">
+                    <div class="calendar-nav">
+                        <button id="prevWeekBtn"><i class="fas fa-chevron-left"></i></button>
+                        <input type="date" id="currentDate">
+                        <button id="nextWeekBtn"><i class="fas fa-chevron-right"></i></button>
+                    </div>
+                    <span class="calendar-title" id="currentMonthYear"></span>
+                     <button id="todayBtn" class="btn-submit" style="width: auto; padding: 5px 12px; font-size: 0.8rem;">Today</button>
+                </div>
+                <div class="calendar-grid-container">
+                    <div class="calendar-week" id="calendarWeek">
+                        <!-- Calendar days will be generated here -->
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <div id="toastContainer"></div>
+    <div id="loadingOverlay" class="loading-overlay">
+        <div class="spinner"></div>
+    </div>
+
+    <script>
+        // Mock data - in a real app, this would come from an API
+        const meetingRooms = [
+            { id: "ny001", name: "Conference Room A", location: "New York", capacity: 10, features: ["Projector"] },
+            { id: "ny002", name: "Meeting Room B", location: "New York", capacity: 6, features: [] },
+            { id: "lon001", name: "The Boardroom", location: "London", capacity: 12, features: ["Whiteboard"] },
+            { id: "tky001", name: "Huddle Space 1", location: "Tokyo", capacity: 4, features: [] }
+        ];
+
+        let bookings = [
+            { id: "b1", subject: "Project Alpha Kickoff", startTime: "2023-10-27T09:00:00", endTime: "2023-10-27T10:30:00", roomId: "ny001", attendees: "a@example.com,b@example.com", description: "Initial meeting for Project Alpha." },
+            { id: "b2", subject: "Marketing Sync", startTime: "2023-10-27T11:00:00", endTime: "2023-10-27T11:30:00", roomId: "lon001", attendees: "c@example.com", description: "Discuss Q4 marketing plan." },
+            { id: "b3", subject: "Design Review", startTime: "2023-10-28T14:00:00", endTime: "2023-10-28T15:00:00", roomId: "ny002", attendees: "d@example.com,e@example.com", description: "Review latest design mockups." },
+            { id: "b4", subject: "Team Standup", startTime: "2023-10-29T09:00:00", endTime: "2023-10-29T09:15:00", roomId: "tky001", attendees: "f@example.com", description: "Daily standup meeting." },
+            { id: "b5", subject: "Client Demo", startTime: "2023-10-29T10:00:00", endTime: "2023-10-29T11:00:00", roomId: "ny001", attendees: "g@example.com", description: "Demonstrate new feature to client." },
+            { id: "b6", subject: "Budget Meeting", startTime: "2023-11-03T13:00:00", endTime: "2023-11-03T14:30:00", roomId: "lon001", attendees: "h@example.com,i@example.com", description: "Discuss budget for next fiscal year." },
+            { id: "b7", subject: "Planning Session", startTime: "2023-11-04T09:30:00", endTime: "2023-11-04T12:00:00", roomId: "ny001", attendees: "a@example.com,d@example.com", description: "Strategic planning for H2." },
+            { id: "b8", subject: "Follow-up Discussion", startTime: "2023-11-04T14:00:00", endTime: "2023-11-04T14:45:00", roomId: "ny002", attendees: "g@example.com", description: "Follow-up on client demo." },
+            { id: "b9", subject: "Weekly Team Sync", startTime: "2023-11-05T10:00:00", endTime: "2023-11-05T10:45:00", roomId: "tky001", attendees: "f@example.com,j@example.com", description: "Sync on weekly tasks." },
+            { id: "b10", subject: "Investor Call", startTime: "2023-11-06T15:00:00", endTime: "2023-11-06T16:00:00", roomId: "lon001", attendees: "k@example.com", description: "Quarterly investor update." }
+        ];
+
+        // DOM Elements
+        const bookingForm = document.getElementById('bookingForm');
+        const bookingSubject = document.getElementById('bookingSubject');
+        const bookingStartTime = document.getElementById('bookingStartTime');
+        const bookingEndTime = document.getElementById('bookingEndTime');
+        const bookingAttendees = document.getElementById('bookingAttendees');
+        const bookingDescription = document.getElementById('bookingDescription');
+        const selectedRoomBadge = document.getElementById('selected-room-badge');
+        const bookingIdInput = document.getElementById('bookingId');
+        const btnCancelUpdate = document.getElementById('btnCancelUpdate');
+        const btnUpdateBooking = document.getElementById('btnUpdateBooking');
+        const roomListContainer = document.querySelector('.room-list-container');
+        const locationFilter = document.getElementById('locationFilter');
+        const calendarWeek = document.getElementById('calendarWeek');
+        const currentDateInput = document.getElementById('currentDate');
+        const currentMonthYearSpan = document.getElementById('currentMonthYear');
+        const prevWeekBtn = document.getElementById('prevWeekBtn');
+        const nextWeekBtn = document.getElementById('nextWeekBtn');
+        const todayBtn = document.getElementById('todayBtn');
+        const toastContainer = document.getElementById('toastContainer');
+        const loadingOverlay = document.getElementById('loadingOverlay');
+        const isRecurringCheckbox = document.getElementById('isRecurring');
+        const recurringOptionsDiv = document.getElementById('recurringOptions');
+        const roomSelectHeader = document.getElementById('roomSelectHeader');
+        const roomSelectOptions = document.getElementById('roomSelectOptions');
+        const selectedRoomIdsInput = document.getElementById('selectedRoomIds');
+
+        let currentViewDate = new Date(); // Use a Date object for easier manipulation
+        let selectedRoomElement = null;
+        let isEditing = false;
+
+        // --- Helper Functions ---
+        function showToast(message, type = 'success') {
+            const toast = document.createElement('div');
+            toast.className = `toast ${type} show`;
+            toast.textContent = message;
+            toastContainer.appendChild(toast);
+            setTimeout(() => {
+                toast.remove();
+            }, 5000);
+        }
+
+        function showLoading(show) {
+            loadingOverlay.style.display = show ? 'flex' : 'none';
+        }
+
+        function formatDateForInput(date) {
+            return date.toISOString().slice(0, 16);
+        }
+
+        function formatDateForDisplay(date) {
+            return date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+        }
+        
+        function formatTimeForDisplay(date) {
+            return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+        }
+
+        function getRoomById(roomId) {
+            return meetingRooms.find(room => room.id === roomId);
+        }
+
+        function getBookingById(bookingId) {
+            return bookings.find(booking => booking.id === bookingId);
+        }
+
+        // --- Room List Rendering ---
+        function renderRoomList(filterLocation = 'all') {
+            roomListContainer.innerHTML = ''; // Clear existing list
+            const locations = {};
+            
+            meetingRooms.forEach(room => {
+                if (filterLocation === 'all' || room.location.toLowerCase() === filterLocation.toLowerCase()) {
+                    if (!locations[room.location]) {
+                        locations[room.location] = [];
+                    }
+                    locations[room.location].push(room);
+                }
+            });
+
+            // Sort locations alphabetically
+            const sortedLocations = Object.keys(locations).sort();
+
+            sortedLocations.forEach(location => {
+                const locationGroup = document.createElement('div');
+                locationGroup.className = 'location-group';
+
+                const locationTitle = document.createElement('div');
+                locationTitle.className = 'location-title';
+                locationTitle.textContent = location;
+                locationGroup.appendChild(locationTitle);
+
+                // Sort rooms within a location alphabetically by name
+                locations[location].sort((a, b) => a.name.localeCompare(b.name));
+
+                locations[location].forEach(room => {
+                    const roomCard = document.createElement('div');
+                    roomCard.className = 'room-card';
+                    roomCard.dataset.roomId = room.id;
+                    roomCard.innerHTML = `
+                        <div class="room-info">
+                            <h3>${room.name}</h3>
+                            <div class="room-meta">
+                                <span>Capacity: ${room.capacity}</span>
+                                ${room.features.length > 0 ? `<span>${room.features.join(', ')}</span>` : ''}
+                            </div>
+                        </div>
+                        <i class="fas fa-chevron-right"></i>
+                    `;
+                    roomCard.addEventListener('click', handleRoomSelect);
+                    locationGroup.appendChild(roomCard);
+                });
+                roomListContainer.appendChild(locationGroup);
+            });
+        }
+
+        function handleRoomSelect(event) {
+            const clickedRoomCard = event.currentTarget;
+            const roomId = clickedRoomCard.dataset.roomId;
+
+            // Clear previous selection
+            if (selectedRoomElement) {
+                selectedRoomElement.classList.remove('active');
+            }
+
+            // Update selection
+            clickedRoomCard.classList.add('active');
+            selectedRoomElement = clickedRoomCard;
+            
+            // Populate booking form with selected room info if not editing an existing booking
+            if (!isEditing) {
+                const room = getRoomById(roomId);
+                if (room) {
+                    selectedRoomBadge.textContent = `${room.name} (${room.location})`;
+                    selectedRoomBadge.style.display = 'inline-block';
+                    
+                    // Update the hidden input for selected room IDs
+                    selectedRoomIdsInput.value = roomId;
+                    
+                    // Update the multi-select header text if it's the first selection
+                    if (roomSelectHeader.textContent.includes('Select Room')) {
+                         roomSelectHeader.firstChild.textContent = room.name; // Update text, keep icon
+                    } else {
+                        // Handle multiple selections if needed, for now just set first
+                        roomSelectHeader.firstChild.textContent = room.name;
+                         selectedRoomIdsInput.value = roomId; // Reset to single for simplicity
+                    }
+                    // Close the dropdown after selection for single room scenario
+                    roomSelectOptions.classList.remove('show'); 
+                }
+            }
+        }
+
+        // --- Calendar Rendering ---
+        function renderCalendar() {
+            calendarWeek.innerHTML = ''; // Clear existing calendar
+            const today = new Date();
+            const currentDayOfWeek = today.getDay(); // 0 for Sunday, 1 for Monday, etc.
+            const currentDayOfMonth = today.getDate();
+            const currentMonth = today.getMonth();
+            const currentYear = today.getFullYear();
+
+            // Calculate the date for the start of the week (e.g., Monday)
+            const startOfWeek = new Date(currentViewDate);
+            startOfWeek.setDate(currentViewDate.getDate() - currentViewDate.getDay()); // Assuming Sunday is the start of week for calculation
+            startOfWeek.setHours(0, 0, 0, 0);
+
+            // Adjust if Sunday is not desired as the first day
+            if (startOfWeek.getDay() !== 0) {
+                 startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay());
+            }
+            
+            const daysInMonth = new Date(currentViewDate.getFullYear(), currentViewDate.getMonth() + 1, 0).getDate();
+
+            const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+            const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+            
+            currentMonthYearSpan.textContent = `${months[currentViewDate.getMonth()]} ${currentViewDate.getFullYear()}`;
+            currentDateInput.value = currentViewDate.toISOString().split('T')[0]; // Set the date input value
+
+            for (let i = 0; i < 7; i++) {
+                const dayElement = document.createElement('div');
+                dayElement.className = 'day-column';
+                
+                const calendarDate = new Date(startOfWeek);
+                calendarDate.setDate(startOfWeek.getDate() + i);
+                calendarDate.setHours(0,0,0,0); // Normalize time
+
+                const isToday = calendarDate.toDateString() === today.toDateString();
+                if (isToday) {
+                    dayElement.classList.add('today');
+                }
+
+                const dayName = days[calendarDate.getDay()];
+                const dateNum = calendarDate.getDate();
+                const month = calendarDate.getMonth();
+                const year = calendarDate.getFullYear();
+
+                dayElement.innerHTML = `
+                    <div class="day-header">
+                        <span class="day-name">${dayName}</span>
+                        <span class="date-num">${dateNum}</span>
+                    </div>
+                    <div class="day-body" data-date="${calendarDate.toISOString().split('T')[0]}">
+                        <!-- Events will be loaded here -->
+                    </div>
+                `;
+                calendarWeek.appendChild(dayElement);
+            }
+            renderEventsOnCalendar();
+        }
+        
+        function renderEventsOnCalendar() {
+            const dayBodies = calendarWeek.querySelectorAll('.day-body');
+            
+            // Clear existing events first
+            dayBodies.forEach(body => body.innerHTML = '');
+
+            const calendarStartDate = new Date(currentViewDate);
+            calendarStartDate.setDate(currentViewDate.getDate() - currentViewDate.getDay());
+            calendarStartDate.setHours(0, 0, 0, 0);
+
+            const calendarEndDate = new Date(calendarStartDate);
+            calendarEndDate.setDate(calendarStartDate.getDate() + 6);
+            calendarEndDate.setHours(23, 59, 59, 999);
+            
+            bookings.forEach(booking => {
+                const bookingStartTime = new Date(booking.startTime);
+                const bookingEndTime = new Date(booking.endTime);
+                
+                // Check if the booking falls within the current calendar week view
+                if (bookingStartTime < calendarEndDate && bookingEndTime > calendarStartDate) {
+                    const roomId = booking.roomId;
+                    const room = getRoomById(roomId);
+                    const roomName = room ? room.name : 'Unknown Room';
+                    
+                    // Determine which day(s) the event should appear on
+                    let currentDate = new Date(calendarStartDate);
+                    while(currentDate <= calendarEndDate) {
+                         currentDate.setHours(0,0,0,0);
+                        const eventDayStart = new Date(currentDate);
+                        eventDayStart.setHours(0,0,0,0);
+                        const eventDayEnd = new Date(currentDate);
+                        eventDayEnd.setHours(23, 59, 59, 999);
+
+                        // Check for overlap with the current day being rendered
+                        if (bookingStartTime < eventDayEnd && bookingEndTime > eventDayStart) {
+                            const targetDayBody = document.querySelector(`.day-body[data-date="${currentDate.toISOString().split('T')[0]}"]`);
+                            if (targetDayBody) {
+                                const eventDiv = document.createElement('div');
+                                eventDiv.className = 'event-card';
+                                eventDiv.dataset.bookingId = booking.id;
+                                eventDiv.innerHTML = `
+                                    <span class="event-time">${formatTimeForDisplay(bookingStartTime)} - ${formatTimeForDisplay(bookingEndTime)}</span>
+                                    <span class="event-title">${booking.subject} (${roomName})</span>
+                                    <div class="event-tooltip">
+                                        <div class="tooltip-row">
+                                            <span class="tooltip-label">Subject</span>
+                                            <span class="tooltip-value">${booking.subject}</span>
+                                        </div>
+                                        <div class="tooltip-row">
+                                            <span class="tooltip-label">Room</span>
+                                            <span class="tooltip-value">${roomName}</span>
+                                        </div>
+                                        <div class="tooltip-row">
+                                            <span class="tooltip-label">Attendees</span>
+                                            <span class="tooltip-value">${booking.attendees || 'N/A'}</span>
+                                        </div>
+                                        ${booking.description ? `<div class="tooltip-row">
+                                            <span class="tooltip-label">Description</span>
+                                            <span class="tooltip-value">${booking.description}</span>
+                                        </div>` : ''}
+                                        <div class="tooltip-actions">
+                                            <button class="btn-tool btn-tool-edit" onclick="editBooking('${booking.id}')"><i class="fas fa-edit"></i> Edit</button>
+                                            <button class="btn-tool btn-tool-del" onclick="deleteBookingPrompt('${booking.id}')"><i class="fas fa-trash"></i> Delete</button>
+                                            <button class="btn-tool btn-tool-copy" onclick="copyBookingLink('${booking.id}')"><i class="fas fa-link"></i> Copy</button>
+                                        </div>
+                                    </div>
+                                `; 
+                                targetDayBody.appendChild(eventDiv);
+                            }
+                        }
+                        currentDate.setDate(currentDate.getDate() + 1);
+                    }
+                }
+            });
+        }
+
+        // --- Event Handlers ---
+        function handleLocationFilterChange(event) {
+            renderRoomList(event.target.value);
+        }
+
+        function handleFormSubmit(event) {
+            event.preventDefault();
+            showLoading(true);
+
+            const formData = new FormData(bookingForm);
+            const subject = formData.get('subject');
+            const startTime = formData.get('startTime');
+            const endTime = formData.get('endTime');
+            const attendees = formData.get('attendees');
+            const description = formData.get('description');
+            const selectedRoomIds = selectedRoomIdsInput.value.split(',').map(id => id.trim()).filter(id => id);
+            const bookingId = formData.get('bookingId');
+            const isRecurring = isRecurringCheckbox.checked;
+            const recurringFrequency = formData.get('recurringFrequency');
+            const recurringEndDate = formData.get('recurringEndDate');
+            const recurringCount = formData.get('recurringCount');
+
+            // --- Basic Validation ---
+            if (!subject || !startTime || !endTime || selectedRoomIds.length === 0) {
+                showToast('Subject, Start Time, End Time, and at least one Room are required.', 'error');
+                showLoading(false);
+                return;
+            }
+
+            const startDateTime = new Date(startTime);
+            const endDateTime = new Date(endTime);
+
+            if (startDateTime >= endDateTime) {
+                showToast('End time must be after start time.', 'error');
+                showLoading(false);
+                return;
+            }
+            
+            const requestedRoomIds = selectedRoomIds;
+            let conflict = false;
+
+            // Check for room availability (simplified check)
+            for (const roomId of requestedRoomIds) {
+                const roomBookings = bookings.filter(b => b.roomId === roomId);
+                const hasConflict = roomBookings.some(b => {
+                    const existingStart = new Date(b.startTime);
+                    const existingEnd = new Date(b.endTime);
+                    // Check for overlap: (StartA < EndB) and (EndA > StartB)
+                    return startDateTime < existingEnd && endDateTime > existingStart;
+                });
+
+                if (hasConflict) {
+                    const room = getRoomById(roomId);
+                    showToast(`Room '${room.name}' is already booked during the selected time. Please choose another room or time.`, 'error');
+                    conflict = true;
+                    break;
+                }
+            }
+            
+            if (conflict) {
+                showLoading(false);
+                return;
+            }
+            
+            // Handle Recurring Bookings (Simplified)
+             if (isRecurring && (!recurringEndDate || !recurringCount || recurringCount < 1)) {
+                 showToast('For recurring bookings, please specify End Date and Number of Occurrences.', 'warning');
+                 showLoading(false);
+                 return;
+             }
+
+            // Simulate API call
+            setTimeout(() => {
+                showLoading(false);
+                if (bookingId) {
+                    // Update existing booking
+                    const index = bookings.findIndex(b => b.id === bookingId);
+                    if (index !== -1) {
+                         bookings[index] = {
+                            ...bookings[index],
+                            subject: subject,
+                            startTime: startTime,
+                            endTime: endTime,
+                            attendees: attendees,
+                            description: description,
+                            roomId: requestedRoomIds[0] // For simplicity, only updating one room for now
+                        };
+                        showToast('Booking updated successfully!', 'success');
+                    }
+                } else {
+                    // Create new booking(s)
+                    // For simplicity, create one booking. A real app would handle multiple rooms and recurrence properly.
+                    const newBooking = {
+                        id: `b${Date.now()}`,
+                        subject: subject,
+                        startTime: startTime,
+                        endTime: endTime,
+                        roomId: requestedRoomIds[0],
+                        attendees: attendees,
+                        description: description
+                    };
+                    bookings.push(newBooking);
+                    showToast('Booking successful!', 'success');
+                    
+                    // Handle recurrence (basic implementation)
+                    if (isRecurring) {
+                        console.log('Recurring booking initiated:', {
+                            frequency: recurringFrequency, 
+                            endDate: recurringEndDate, 
+                            count: recurringCount
+                        });
+                        // In a real scenario, this would involve creating multiple bookings based on the rules.
+                    }
+                }
+                
+                resetForm();
+                renderRoomList(locationFilter.value);
+                renderEventsOnCalendar(); // Re-render calendar with new/updated data
+            }, 500); 
+        }
+        
+        function resetForm(clearSelection = true) {
+            bookingForm.reset();
+            bookingIdInput.value = '';
+            btnUpdateBooking.style.display = 'none';
+            btnCancelUpdate.style.display = 'none';
+            document.querySelector('.form-title span').textContent = 'Book a Room'; // Reset title
+            selectedRoomBadge.style.display = 'none';
+            roomSelectHeader.firstChild.textContent = 'Select Room(s)'; // Reset multi-select header
+            selectedRoomIdsInput.value = '';
+            isEditing = false;
+            recurringOptionsDiv.style.display = 'none';
+            isRecurringCheckbox.checked = false;
+            
+            if (clearSelection && selectedRoomElement) {
+                selectedRoomElement.classList.remove('active');
+                selectedRoomElement = null;
+            }
+            
+            // Reset room selection dropdown
+            roomSelectOptions.innerHTML = '';
+            populateRoomMultiSelect();
+        }
+
+        function editBooking(bookingId) {
+            showLoading(true);
+            setTimeout(() => {
+                const booking = getBookingById(bookingId);
+                if (booking) {
+                    isEditing = true;
+                    bookingIdInput.value = booking.id;
+                    bookingSubject.value = booking.subject;
+                    bookingStartTime.value = formatDateForInput(new Date(booking.startTime));
+                    bookingEndTime.value = formatDateForInput(new Date(booking.endTime));
+                    bookingAttendees.value = booking.attendees;
+                    bookingDescription.value = booking.description;
+                    
+                    // Update room selection
+                    selectedRoomIdsInput.value = booking.roomId;
+                    selectedRoomBadge.textContent = `${getRoomById(booking.roomId)?.name} (${getRoomById(booking.roomId)?.location})`;
+                    selectedRoomBadge.style.display = 'inline-block';
+                    roomSelectHeader.firstChild.textContent = getRoomById(booking.roomId)?.name;
+
+                    // Highlight the selected room in the list
+                    if (selectedRoomElement) {
+                        selectedRoomElement.classList.remove('active');
+                    }
+                    selectedRoomElement = roomListContainer.querySelector(`.room-card[data-room-id="${booking.roomId}"]`);
+                    if (selectedRoomElement) {
+                        selectedRoomElement.classList.add('active');
+                    }
+
+                    document.querySelector('.form-title span').textContent = 'Update Booking';
+                    btnUpdateBooking.style.display = 'block';
+                    btnCancelUpdate.style.display = 'inline-block';
+                    
+                    // Hide the primary submit button when editing
+                    bookingForm.querySelector('button[type="submit"]').style.display = 'none';
+
+                } else {
+                    showToast('Booking not found.', 'error');
+                }
+                showLoading(false);
+            }, 300); // Simulate API delay
+        }
+
+        function deleteBookingPrompt(bookingId) {
+            if (confirm('Are you sure you want to delete this booking? This action cannot be undone.')) {
+                showLoading(true);
+                setTimeout(() => {
+                    bookings = bookings.filter(b => b.id !== bookingId);
+                    showToast('Booking deleted successfully!', 'success');
+                    resetForm(); // Reset form if an edit was in progress
+                    renderEventsOnCalendar(); // Re-render calendar
+                    showLoading(false);
+                }, 500);
+            }
+        }
+        
+        function copyBookingLink(bookingId) {
+            // In a real app, this would generate a unique link to the booking details
+            const link = `${window.location.href}?bookingId=${bookingId}`;
+            navigator.clipboard.writeText(link).then(() => {
+                showToast('Booking link copied to clipboard!', 'success');
+            }).catch(err => {
+                showToast('Failed to copy link.', 'error');
+                console.error('Copy failed: ', err);
+            });
+        }
+
+        // --- Multi-select Logic ---
+        function populateRoomMultiSelect() {
+             roomSelectOptions.innerHTML = ''; // Clear previous options
+             const selectedIds = selectedRoomIdsInput.value.split(',').map(id => id.trim()).filter(id => id);
+             let allSelected = true;
+
+            meetingRooms.forEach(room => {
+                const optionDiv = document.createElement('div');
+                const isSelected = selectedIds.includes(room.id);
+                if (isSelected) {
+                    optionDiv.innerHTML = `
+                        <input type="checkbox" id="room_${room.id}" data-room-id="${room.id}" checked>
+                        <label for="room_${room.id}">${room.name} (${room.location})</label>
+                    `;
+                } else {
+                    optionDiv.innerHTML = `
+                        <input type="checkbox" id="room_${room.id}" data-room-id="${room.id}">
+                        <label for="room_${room.id}">${room.name} (${room.location})</label>
+                    `;
+                    allSelected = false; // Found at least one unselected room
+                }
+                optionDiv.className = 'multi-select-option';
+                optionDiv.querySelector('input[type="checkbox"]').addEventListener('change', handleMultiSelectChange);
+                roomSelectOptions.appendChild(optionDiv);
+            });
+            
+            updateMultiSelectHeader(allSelected);
+        }
+
+        function handleMultiSelectHeaderClick() {
+            roomSelectOptions.classList.toggle('show');
+        }
+        
+        function handleMultiSelectChange(event) {
+            const checkbox = event.target;
+            const roomId = checkbox.dataset.roomId;
+            let currentSelectedIds = selectedRoomIdsInput.value.split(',').map(id => id.trim()).filter(id => id);
+            
+            if (checkbox.checked) {
+                if (!currentSelectedIds.includes(roomId)) {
+                    currentSelectedIds.push(roomId);
+                }
+            } else {
+                currentSelectedIds = currentSelectedIds.filter(id => id !== roomId);
+            }
+            
+            selectedRoomIdsInput.value = currentSelectedIds.join(',');
+            updateMultiSelectHeader(false); // Update header text, assume not all selected initially
+        }
+        
+        function updateMultiSelectHeader(allSelected) {
+            const selectedIds = selectedRoomIdsInput.value.split(',').map(id => id.trim()).filter(id => id);
+            let headerText = '';
+            if (selectedIds.length === 0) {
+                headerText = 'Select Room(s)';
+            } else if (selectedIds.length === 1) {
+                headerText = getRoomById(selectedIds[0])?.name || 'Select Room(s)';
+            } else {
+                 headerText = `${selectedIds.length} rooms selected`;
+            }
+             // Update the text node of the header
+             if (roomSelectHeader.firstChild && roomSelectHeader.firstChild.nodeType === Node.TEXT_NODE) {
+                 roomSelectHeader.firstChild.textContent = headerText;
+             }
+            // Keep the icon
+            roomSelectHeader.querySelector('i').className = 'fas fa-caret-down';
+        }
+
+        // --- Calendar Navigation ---
+        function goToPreviousWeek() {
+            currentViewDate.setDate(currentViewDate.getDate() - 7);
+            renderCalendar();
+        }
+
+        function goToNextWeek() {
+            currentViewDate.setDate(currentViewDate.getDate() + 7);
+            renderCalendar();
+        }
+        
+        function goToToday() {
+             currentViewDate = new Date();
+             renderCalendar();
+        }
+
+        function changeDate(event) {
+             const newDate = new Date(event.target.value);
+             // Set the currentViewDate to the selected date, but maintain the start of its week for rendering
+             const diff = newDate.getDate() - currentViewDate.getDate();
+             currentViewDate.setDate(currentViewDate.getDate() + diff);
+             currentViewDate.setHours(0,0,0,0); // Reset time to avoid potential issues
+             renderCalendar();
+        }
+
+        // --- Initialization ---
+        function initialize() {
+            // Set initial date input value and render calendar
+            currentViewDate = new Date();
+            currentViewDate.setHours(0,0,0,0); // Normalize time
+            currentDateInput.value = currentViewDate.toISOString().split('T')[0];
+            
+            renderRoomList();
+            renderCalendar();
+            populateRoomMultiSelect();
+
+            // Add event listeners
+            bookingForm.addEventListener('submit', handleFormSubmit);
+            locationFilter.addEventListener('change', handleLocationFilterChange);
+            prevWeekBtn.addEventListener('click', goToPreviousWeek);
+            nextWeekBtn.addEventListener('click', goToNextWeek);
+            todayBtn.addEventListener('click', goToToday);
+            currentDateInput.addEventListener('change', changeDate);
+            isRecurringCheckbox.addEventListener('change', () => {
+                 recurringOptionsDiv.style.display = isRecurringCheckbox.checked ? 'grid' : 'none';
+            });
+            roomSelectHeader.addEventListener('click', handleMultiSelectHeaderClick);
+            roomSelectHeader.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') handleMultiSelectHeaderClick(); });
+            btnCancelUpdate.addEventListener('click', resetForm);
+        }
+
+        // Global functions for inline onclick events
+        window.editBooking = editBooking;
+        window.deleteBookingPrompt = deleteBookingPrompt;
+        window.copyBookingLink = copyBookingLink;
+
+        initialize();
+
+    </script>
+</body>
+
+</html>

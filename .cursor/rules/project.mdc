@@ -1,0 +1,69 @@
+---
+description: Project rules for Gemini Code Web
+alwaysApply: true
+---
+
+# Gemini Code Web - Cursor Rules
+
+## Project Type
+
+This is a Next.js App Router project using:
+
+- Next.js
+- TypeScript
+- Tailwind CSS
+- Gemini API
+- Server-side API routes in `app/api`
+- Utility files in `lib`
+- Generated project folders in `workspaces`
+
+## Important Files
+
+- `app/page.tsx`: main UI page
+- `app/layout.tsx`: root layout
+- `app/globals.css`: global CSS
+- `app/api/upload/route.ts`: upload ZIP/project API
+- `app/api/agent/route.ts`: AI agent API
+- `app/api/apply/route.ts`: apply AI changes API
+- `app/api/diff/route.ts`: preview diff API
+- `app/api/download/route.ts`: download ZIP API
+- `lib/gemini.ts`: Gemini client setup
+- `lib/workspace.ts`: workspace read/write utilities
+- `lib/scanner.ts`: file scanning logic
+- `lib/agent.ts`: AI agent logic
+- `workspaces/`: uploaded/generated project files
+
+## Coding Rules
+
+- Use TypeScript.
+- Use App Router conventions.
+- API routes must export `GET`, `POST`, or other HTTP methods from `route.ts`.
+- Keep Gemini API key server-side only.
+- Never expose `GEMINI_API_KEY` in React client components.
+- Use `.env.local` for secrets.
+- Prefer simple, readable code.
+- Keep UI in `app/page.tsx` unless components are clearly needed.
+- Use Tailwind CSS for styling.
+- Keep compatibility with Windows paths.
+- Do not delete user files in `workspaces` unless explicitly requested.
+- When returning API responses, use `NextResponse.json(...)`.
+- When handling file paths, validate paths to avoid escaping the workspace directory.
+
+## Current Goal
+
+Build a web-based Gemini code assistant that can:
+
+1. Upload a ZIP/project.
+2. Scan files.
+3. Ask Gemini to modify code.
+4. Preview diff before applying.
+5. Apply changes.
+6. Generate tests/testcases when needed.
+7. Download the modified project as ZIP.
+
+## Development Commands
+
+```bash
+npm install
+npm run dev
+npm run build

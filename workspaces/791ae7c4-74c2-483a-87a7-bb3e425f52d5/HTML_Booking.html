@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meeting Room Booking</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        :root {
+            --primary-color: #3492ab;
+            --primary-dark: #2a768a;
+            --bg-color: #f4f7f6;
+            --card-bg: #ffffff;
+            --text-color: #333333;
+            --text-secondary: #666666;
+            --border-color: #e0e0e0;
+            --error-color: #e74c3c;
+            --success-color: #2ecc71;
+            --warning-color: #f39c12;
+            --shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* --- Header --- */
+        header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 10px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            flex-shrink: 0;
+            height: 60px;
+        }
+
+        header h1 {
+            font-size: 1.2rem;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            white-space: nowrap;
+            margin-right: 20px;
+            flex-shrink: 0;
+        }
+
+        .marquee-container {
+            flex: 1;
+            overflow: hidden;
+            position: relative;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            mask-image: linear-gradient(to right, transparent, black 20px, black 95%, transparent);
+            -webkit-mask-image: linear-gradient(to right, transparent, black 20px, black 95%, transparent);
+        }
+
+        .marquee-text {
+            position: absolute;
+            white-space: nowrap;
+            will-change: transform;
+            animation: marquee 60s linear infinite;
+            animation-delay: -5s;
+            font-size: 0.9rem;
+            display: flex;
+            gap: 40px;
+        }
+
+        .marquee-container:hover .marquee-text {
+            animation-play-state: paused;
+            cursor: default;
+        }
+
+        @keyframes marquee {
+            0% {
+                transform: translateX(100vw);
+            }
+
+            100% {
+                transform: translateX(-100%);
+            }
+        }
+
+        /* --- Layout --- */
+        .container {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+            height: 100%;
+        }
+
+        .left-panel {
+            width: 320px;
+            background: var(--card-bg);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 0;
+        }
+
+        .right-panel {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        /* --- Components --- */
+        .panel-header {
+            padding: 15px;
+            border-bottom: 1px solid var(--border-color);
+            font-weight: 500;
+            color: var(--primary-color);
+        }
+
+        .filter-section {
+            padding: 10px 15px;
+            background: #fafafa;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .filter-select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-family: inherit;
+        }
+
+        .room-list-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px;
+        }
+
+        .location-group {
+            margin-bottom: 15px;
+        }
+
+        .location-title {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+            padding-left: 5px;
+            border-left: 3px solid var(--primary-color);
+        }
+
+        .room-card {
+            background: white;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 12px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .room-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow);
+            border-color: var(--primary-color);
+        }
+
+        .room-card.active {
+            background-color: #eaf6f9;
+            border-color: var(--primary-color);
+        }
+
+        .room-info h3 {
+            font-size: 1rem;
+            margin-bottom: 4px;
+        }
+
+        .room-meta {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            display: flex;
+            gap: 10px;
+        }
+
+        /* Form */
+        .booking-form-card {
+            background: var(--card-bg);
+            border-radius: 8px;
+            padding: 15px 20px;
+            box-shadow: var(--shadow);
+            flex-shrink: 0;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            font-size: 0.9rem;
+            color: var(--text-primary);
+        }
+
+        .form-group input[type="text"],
+        .form-group input[type="datetime-local"],
+        .form-group textarea {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-family: inherit;
+            font-size: 0.9rem;
+        }
+
+        .form-group textarea {
+            min-height: 80px;
+            resize: vertical;
+        }
+
+        .form-actions {
+            text-align: right;
+        }
+
+        .btn {
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background-color 0.2s;
+            font-family: inherit;
+            font-size: 0.9rem;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-dark);
+        }
+
+        .btn-secondary {
+            background-color: var(--text-secondary);
+            color: white;
+            margin-left: 10px;
+        }
+
+        .btn-secondary:hover {
+            background-color: #555555;
+        }
+
+        .error-message {
+            color: var(--error-color);
+            font-size: 0.85rem;
+            margin-top: 5px;
+        }
+
+        .success-message {
+            color: var(--success-color);
+            font-size: 0.9rem;
+            font-weight: 500;
+            margin-top: 10px;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
+            }
+
+            .left-panel {
+                width: 100%;
+                height: auto;
+                border-right: none;
+                border-bottom: 1px solid var(--border-color);
+            }
+
+            .right-panel {
+                height: calc(100vh - 60px - 320px); /* Adjust based on header and left-panel height */
+            }
+        }
+
+        @media (max-width: 480px) {
+            header h1 {
+                font-size: 1rem;
+                margin-right: 10px;
+            }
+
+            .marquee-container {
+                display: none; /* Hide marquee on smaller screens */
+            }
+
+            .right-panel {
+                padding: 15px;
+            }
+
+            .booking-form-card {
+                padding: 10px 15px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <h1><i class="fas fa-calendar-alt"></i> Meeting Room Booking</h1>
+        <div class="marquee-container">
+            <div class="marquee-text">
+                <span>Welcome! Book your meeting room easily. Check availability and reserve your slot.</span>
+                <span>For assistance, please contact the administrator. Enjoy your meeting!</span>
+                <span>Remember to cancel if your plans change to free up the room for others.</span>
+                <span>New features coming soon! Stay tuned.</span>
+            </div>
+        </div>
+        <button id="logoutBtn" class="btn btn-secondary">Logout</button>
+    </header>
+
+    <div class="container">
+        <div class="left-panel">
+            <div class="panel-header">Locations</div>
+            <div class="filter-section">
+                <select id="locationFilter" class="filter-select">
+                    <option value="all">All Locations</option>
+                    <option value="new-york">New York</option>
+                    <option value="london">London</option>
+                    <option value="tokyo">Tokyo</option>
+                </select>
+            </div>
+            <div id="roomListContainer" class="room-list-container">
+                <!-- Room cards will be populated here -->
+            </div>
+        </div>
+
+        <div class="right-panel">
+            <div class="booking-form-card" id="bookingFormCard">
+                <div class="panel-header">Book a Room</div>
+                <form id="bookingForm">
+                    <div class="form-group">
+                        <label for="roomName">Room:</label>
+                        <input type="text" id="roomName" name="roomName" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label for="startTime">Start Time:</label>
+                        <input type="datetime-local" id="startTime" name="startTime" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="endTime">End Time:</label>
+                        <input type="datetime-local" id="endTime" name="endTime" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="eventName">Event Name:</label>
+                        <input type="text" id="eventName" name="eventName" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="attendees">Number of Attendees:</label>
+                        <input type="number" id="attendees" name="attendees" min="1" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="notes">Notes:</label>
+                        <textarea id="notes" name="notes"></textarea>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">Book Now</button>
+                        <button type="button" id="cancelBtn" class="btn btn-secondary">Cancel</button>
+                    </div>
+                    <div id="formMessage" class="error-message"></div>
+                </form>
+            </div>
+            <div id="bookingConfirmationMessage" class="success-message"></div>
+        </div>
+    </div>
+
+    <script>
+        // Sample room data (replace with actual API call)
+        const rooms = [
+            { id: 'r1', name: 'Conference Room A', location: 'new-york', capacity: 10, amenities: ['Projector', 'Whiteboard'] },
+            { id: 'r2', name: 'Small Meeting Room B', location: 'new-york', capacity: 4, amenities: ['TV'] },
+            { id: 'r3', name: 'Boardroom C', location: 'london', capacity: 15, amenities: ['Projector', 'Video Conferencing'] },
+            { id: 'r4', name: 'Huddle Space D', location: 'tokyo', capacity: 6, amenities: ['Whiteboard'] },
+            { id: 'r5', name: 'Training Room E', location: 'new-york', capacity: 20, amenities: ['Projector', 'Sound System'] }
+        ];
+
+        let selectedRoomId = null;
+        const roomListContainer = document.getElementById('roomListContainer');
+        const bookingForm = document.getElementById('bookingForm');
+        const roomNameInput = document.getElementById('roomName');
+        const startTimeInput = document.getElementById('startTime');
+        const endTimeInput = document.getElementById('endTime');
+        const eventNameInput = document.getElementById('eventName');
+        const attendeesInput = document.getElementById('attendees');
+        const notesInput = document.getElementById('notes');
+        const formMessage = document.getElementById('formMessage');
+        const bookingFormCard = document.getElementById('bookingFormCard');
+        const bookingConfirmationMessage = document.getElementById('bookingConfirmationMessage');
+        const locationFilter = document.getElementById('locationFilter');
+        const cancelBtn = document.getElementById('cancelBtn');
+        const logoutBtn = document.getElementById('logoutBtn');
+
+        // --- Utility Functions ---
+        function formatTime(date) {
+            if (!(date instanceof Date) || isNaN(date.getTime())) {
+                console.error("Invalid date provided to formatTime");
+                return "Invalid Date";
+            }
+            const hours = date.getHours();
+            const minutes = date.getMinutes();
+            // Corrected formatting to ensure two digits
+            const formattedHours = hours < 10 ? '0' + hours : hours;
+            const formattedMinutes = minutes < 10 ? '0' + minutes : minutes;
+            return `${formattedHours}:${formattedMinutes}`;
+        }
+
+        function formatDateTimeForInput(date) {
+             if (!(date instanceof Date) || isNaN(date.getTime())) {
+                console.error("Invalid date provided to formatDateTimeForInput");
+                return "";
+            }
+            const year = date.getFullYear();
+            const month = (date.getMonth() + 1).toString().padStart(2, '0');
+            const day = date.getDate().toString().padStart(2, '0');
+            const hours = date.getHours().toString().padStart(2, '0');
+            const minutes = date.getMinutes().toString().padStart(2, '0');
+            return `${year}-${month}-${day}T${hours}:${minutes}`;
+        }
+
+        // --- Room List Handling ---
+        function initializeRoomList() {
+            roomListContainer.innerHTML = ''; // Clear existing list
+            const selectedLocation = locationFilter.value;
+            const filteredRooms = selectedLocation === 'all' ? rooms : rooms.filter(room => room.location === selectedLocation);
+
+            // Group rooms by location for better UI
+            const roomsByLocation = filteredRooms.reduce((acc, room) => {
+                if (!acc[room.location]) {
+                    acc[room.location] = [];
+                }
+                acc[room.location].push(room);
+                return acc;
+            }, {});
+
+            for (const location in roomsByLocation) {
+                const locationGroup = document.createElement('div');
+                locationGroup.className = 'location-group';
+
+                const locationTitle = document.createElement('div');
+                locationTitle.className = 'location-title';
+                locationTitle.textContent = location.charAt(0).toUpperCase() + location.slice(1);
+                locationGroup.appendChild(locationTitle);
+
+                roomsByLocation[location].forEach(room => {
+                    const roomCard = document.createElement('div');
+                    roomCard.className = 'room-card';
+                    roomCard.dataset.roomId = room.id;
+                    roomCard.innerHTML = `
+                        <div class="room-info">
+                            <h3>${room.name}</h3>
+                            <div class="room-meta">
+                                <span><i class="fas fa-map-marker-alt"></i> ${location}</span>
+                                <span><i class="fas fa-users"></i> ${room.capacity}</span>
+                                <span><i class="fas fa-plug"></i> ${room.amenities.join(', ')}</span>
+                            </div>
+                        </div>
+                        <i class="fas fa-chevron-right"></i>
+                    `;
+                    roomCard.addEventListener('click', () => selectRoom(room.id));
+                    locationGroup.appendChild(roomCard);
+                });
+                roomListContainer.appendChild(locationGroup);
+            }
+        }
+
+        function selectRoom(roomId) {
+            selectedRoomId = roomId;
+            // Remove active class from all room cards
+            document.querySelectorAll('.room-card').forEach(card => card.classList.remove('active'));
+            // Add active class to the selected room card
+            const selectedCard = document.querySelector(`.room-card[data-room-id="${roomId}"]`);
+            if (selectedCard) {
+                selectedCard.classList.add('active');
+            }
+
+            const selectedRoom = rooms.find(room => room.id === roomId);
+            updateBookingForm(selectedRoom);
+            bookingConfirmationMessage.textContent = ''; // Clear confirmation message
+            formMessage.textContent = ''; // Clear form error message
+        }
+
+        // --- Booking Form Handling ---
+        function updateBookingForm(room) {
+            // Added check for null room
+            if (!room) {
+                console.warn("Attempted to update booking form with no room data.");
+                roomNameInput.value = '';
+                // Optionally clear other fields or disable the form
+                // bookingFormCard.style.display = 'none'; // Example: Hide form
+                return;
+            }
+            roomNameInput.value = room.name;
+            // Set default time to next hour, for 1 hour duration
+            const now = new Date();
+            const startTime = new Date(now);
+            startTime.setHours(Math.floor(now.getHours() / 1) * 1 + 1, 0, 0, 0);
+            const endTime = new Date(startTime);
+            endTime.setHours(startTime.getHours() + 1);
+
+            startTimeInput.value = formatDateTimeForInput(startTime);
+            endTimeInput.value = formatDateTimeForInput(endTime);
+            eventNameInput.value = '';
+            attendeesInput.value = '';
+            notesInput.value = '';
+            // bookingFormCard.style.display = 'block'; // Ensure form is visible if hidden previously
+        }
+
+        function handleBookingSubmit(event) {
+            event.preventDefault();
+            formMessage.textContent = ''; // Clear previous messages
+            bookingConfirmationMessage.textContent = '';
+
+            // Check if a room is selected
+            if (!selectedRoomId) {
+                formMessage.textContent = 'Please select a room first.';
+                return;
+            }
+
+            const startTime = new Date(startTimeInput.value);
+            const endTime = new Date(endTimeInput.value);
+
+            // Validate times
+            if (startTime >= endTime) {
+                formMessage.textContent = 'End time must be after start time.';
+                return;
+            }
+            // Add more validation as needed (e.g., check for existing bookings)
+
+            const bookingDetails = {
+                roomId: selectedRoomId,
+                roomName: roomNameInput.value,
+                startTime: startTime.toISOString(),
+                endTime: endTime.toISOString(),
+                eventName: eventNameInput.value,
+                attendees: parseInt(attendeesInput.value),
+                notes: notesInput.value
+            };
+
+            console.log('Booking submitted:', bookingDetails);
+            // In a real application, send bookingDetails to a server
+            bookingConfirmationMessage.textContent = `Booking confirmed for ${roomNameInput.value} from ${formatTime(startTime)} to ${formatTime(endTime)}!`;
+            bookingForm.reset(); // Reset form after successful submission
+            // Optionally clear selection
+            // selectRoom(null); // Call selectRoom with null to reset
+            // Resetting selectedRoomId explicitly after successful booking
+            selectedRoomId = null;
+            document.querySelectorAll('.room-card').forEach(card => card.classList.remove('active'));
+            roomNameInput.value = ''; // Clear the room name field as well
+        }
+
+        function cancelBooking() {
+            selectedRoomId = null;
+            bookingForm.reset();
+            formMessage.textContent = '';
+            bookingConfirmationMessage.textContent = '';
+            document.querySelectorAll('.room-card').forEach(card => card.classList.remove('active'));
+            roomNameInput.value = ''; // Clear the room name field
+            // Optionally hide the form card
+            // bookingFormCard.style.display = 'none';
+        }
+
+        // --- Event Listeners ---
+        locationFilter.addEventListener('change', initializeRoomList);
+        bookingForm.addEventListener('submit', handleBookingSubmit);
+        cancelBtn.addEventListener('click', cancelBooking);
+        logoutBtn.addEventListener('click', () => alert('Logout clicked!')); // Placeholder for logout functionality
+
+        // --- Initial Setup ---
+        initializeRoomList();
+
+    </script>
+</body>
+
+</html>

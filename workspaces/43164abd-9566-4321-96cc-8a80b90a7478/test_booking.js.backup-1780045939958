@@ -1,0 +1,417 @@
+/**
+ * @jest-environment jsdom
+ */
+
+// Mock the entire HTML document content before importing the script
+const mockHtml = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meeting Room Booking Test</title>
+    <style>
+        .room-card { display: flex; justify-content: space-between; align-items: center; padding: 12px; border: 1px solid #e0e0e0; margin-bottom: 8px; cursor: pointer; }
+        .room-card.active { background-color: #eaf6f9; border-color: #3492ab; }
+        .room-info h3 { font-size: 1rem; margin-bottom: 4px; }
+        .room-meta { font-size: 0.8rem; color: #666666; display: flex; gap: 10px; }
+        .booking-form-card { padding: 15px 20px; }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+        .form-group input[type="text"],
+        .form-group input[type="datetime-local"],
+        .form-group textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            font-family: inherit;
+            font-size: 0.9rem;
+        }
+        .form-actions {
+            text-align: right;
+            margin-top: 20px;
+        }
+        .btn {
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-family: inherit;
+            font-weight: 500;
+        }
+        .btn-primary {
+            background-color: #3492ab;
+            color: white;
+        }
+        .btn-secondary {
+            background-color: #666666;
+            color: white;
+            margin-left: 10px;
+        }
+    </style>
+</head>
+<body>
+    <header><h1>Meeting Room Booking</h1></header>
+    <div class="container">
+        <aside class="left-panel">
+            <div class="panel-header">Locations</div>
+            <div class="filter-section">
+                <select id="locationFilter" class="filter-select">
+                    <option value="all">All Locations</option>
+                    <option value="newyork">New York</option>
+                    <option value="london">London</option>
+                </select>
+            </div>
+            <div class="room-list-container" id="roomListContainer">
+            </div>
+        </aside>
+        <main class="right-panel">
+            <div class="booking-form-card">
+                <div class="panel-header">Book a Meeting Room</div>
+                <form id="bookingForm">
+                    <div class="form-group">
+                        <label for="meetingRoomName">Meeting Room</label>
+                        <input type="text" id="meetingRoomName" name="meetingRoomName" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label for="bookingDate">Date & Time</label>
+                        <input type="datetime-local" id="bookingDate" name="bookingDate" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="duration">Duration (hours)</label>
+                        <input type="number" id="duration" name="duration" value="1" min="1" max="8" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="organizerName">Your Name</label>
+                        <input type="text" id="organizerName" name="organizerName" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="purpose">Purpose of Meeting</label>
+                        <textarea id="purpose" name="purpose" required></textarea>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">Book Now</button>
+                        <button type="button" class="btn btn-secondary" onclick="resetForm()">Cancel</button>
+                    </div>
+                </form>
+            </div>
+        </main>
+    </div>
+    <script>
+        // Inject script content here or load from file.
+        // For testing, we assume the script is available globally or imported.
+    </script>
+</body>
+</html>
+`;
+
+document.body.innerHTML = mockHtml;
+
+// --- Mock Data and Functions (as they would be in the HTML file) ---
+const meetingRooms = [
+    { id: 'room101', name: 'Conference Room A', location: 'New York', capacity: 10, amenities: ['Projector', 'Whiteboard'] },
+    { id: 'room102', name: 'Huddle Room B', location: 'New York', capacity: 4, amenities: ['TV', 'Phone'] },
+    { id: 'room201', name: 'Boardroom C', location: 'London', capacity: 20, amenities: ['Projector', 'Video Conferencing'] },
+    { id: 'room202', name: 'Small Meeting Room D', location: 'London', capacity: 6, amenities: ['Whiteboard'] }
+];
+
+let selectedRoomId = null;
+
+function renderRoomList(rooms) {
+    const roomListContainer = document.getElementById('roomListContainer');
+    if (!roomListContainer) return;
+    roomListContainer.innerHTML = ''; // Clear existing list
+
+    const roomsByLocation = rooms.reduce((acc, room) => {
+        if (!acc[room.location]) {
+            acc[room.location] = [];
+        }
+        acc[room.location].push(room);
+        return acc;
+    }, {});
+
+    for (const location in roomsByLocation) {
+        const locationGroupDiv = document.createElement('div');
+        locationGroupDiv.className = 'location-group';
+
+        const locationTitle = document.createElement('div');
+        locationTitle.className = 'location-title';
+        locationTitle.textContent = location;
+        locationGroupDiv.appendChild(locationTitle);
+
+        roomsByLocation[location].forEach(room => {
+            const roomCard = document.createElement('div');
+            roomCard.className = 'room-card';
+            roomCard.dataset.roomId = room.id;
+
+            roomCard.innerHTML = `
+                <div class="room-info">
+                    <h3>${room.name}</h3>
+                    <div class="room-meta">
+                        <span><i class="fas fa-map-marker-alt"></i> ${room.location}</span>
+                        <span><i class="fas fa-users"></i> ${room.capacity} people</span>
+                        <span><i class="fas fa-chair"></i> ${room.amenities.join(', ')}</span>
+                    </div>
+                </div>
+                <i class="fas fa-check-circle"></i>
+            `;
+            roomCard.addEventListener('click', () => handleRoomSelection(room.id, room.name));
+            locationGroupDiv.appendChild(roomCard);
+        });
+        roomListContainer.appendChild(locationGroupDiv);
+    }
+}
+
+function handleRoomSelection(roomId, roomName) {
+    // Remove 'active' class from previously selected room, if any
+    if (selectedRoomId !== null) {
+        const previouslySelectedCard = document.querySelector(`.room-card[data-room-id='${selectedRoomId}']`);
+        if (previouslySelectedCard) {
+            previouslySelectedCard.classList.remove('active');
+        }
+    }
+
+    // Set new selected room
+    selectedRoomId = roomId;
+    const bookingForm = document.getElementById('bookingForm');
+    const meetingRoomNameInput = document.getElementById('meetingRoomName');
+
+    if (bookingForm && meetingRoomNameInput) {
+        meetingRoomNameInput.value = roomName;
+        const selectedCard = document.querySelector(`.room-card[data-room-id='${roomId}']`);
+        if (selectedCard) {
+            selectedCard.classList.add('active');
+        }
+    }
+}
+
+function resetForm() {
+    const bookingForm = document.getElementById('bookingForm');
+    if (bookingForm) {
+        bookingForm.reset();
+    }
+    if (selectedRoomId !== null) {
+        const previouslySelectedCard = document.querySelector(`.room-card[data-room-id='${selectedRoomId}']`);
+        if (previouslySelectedCard) {
+            previouslySelectedCard.classList.remove('active');
+        }
+        selectedRoomId = null;
+    }
+}
+
+// Mock the submit event listener
+const bookingForm = document.getElementById('bookingForm');
+if (bookingForm) {
+    bookingForm.addEventListener('submit', function(event) {
+        event.preventDefault();
+        // Mock submission logic for test
+        const submitButton = event.target.querySelector('button[type="submit"]');
+        if (submitButton) submitButton.disabled = true; // Simulate disabling on submit
+        console.log('Form submitted:', {
+            roomId: selectedRoomId,
+            roomName: document.getElementById('meetingRoomName')?.value,
+            bookingDate: document.getElementById('bookingDate')?.value,
+            duration: document.getElementById('duration')?.value,
+            organizerName: document.getElementById('organizerName')?.value,
+            purpose: document.getElementById('purpose')?.value
+        });
+        if (submitButton) submitButton.disabled = false;
+    });
+}
+
+// Mock the change event listener for filter
+const locationFilter = document.getElementById('locationFilter');
+if (locationFilter) {
+    locationFilter.addEventListener('change', function() {
+        const selectedLocation = this.value;
+        const filteredRooms = selectedLocation === 'all'
+            ? meetingRooms
+            : meetingRooms.filter(room => room.location === selectedLocation);
+        renderRoomList(filteredRooms);
+    });
+}
+
+// Initial render
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+        renderRoomList(meetingRooms);
+    });
+} else {
+    renderRoomList(meetingRooms);
+}
+
+// --- Tests ---
+
+describe('Meeting Room Booking', () => {
+
+    beforeEach(() => {
+        // Reset DOM and mocks before each test
+        document.body.innerHTML = mockHtml;
+        selectedRoomId = null; // Reset global state
+        // Re-initialize event listeners and render
+        const locationFilter = document.getElementById('locationFilter');
+        if (locationFilter) {
+            locationFilter.addEventListener('change', function() {
+                const selectedLocation = this.value;
+                const filteredRooms = selectedLocation === 'all'
+                    ? meetingRooms
+                    : meetingRooms.filter(room => room.location === selectedLocation);
+                renderRoomList(filteredRooms);
+            });
+        }
+        const bookingForm = document.getElementById('bookingForm');
+        if (bookingForm) {
+            bookingForm.addEventListener('submit', function(event) {
+                event.preventDefault();
+                const submitButton = event.target.querySelector('button[type="submit"]');
+                if (submitButton) submitButton.disabled = true;
+                console.log('Form submitted:', {
+                    roomId: selectedRoomId,
+                    roomName: document.getElementById('meetingRoomName')?.value,
+                    bookingDate: document.getElementById('bookingDate')?.value,
+                    duration: document.getElementById('duration')?.value,
+                    organizerName: document.getElementById('organizerName')?.value,
+                    purpose: document.getElementById('purpose')?.value
+                });
+                if (submitButton) submitButton.disabled = false;
+            });
+        }
+        renderRoomList(meetingRooms); // Initial render
+        jest.spyOn(console, 'log').mockImplementation(() => {}); // Mock console.log
+    });
+
+    afterEach(() => {
+        jest.restoreAllMocks(); // Restore mocks
+    });
+
+    test('should render room list correctly grouped by location', () => {
+        const roomListContainer = document.getElementById('roomListContainer');
+        expect(roomListContainer.children.length).toBe(3); // 3 locations: New York, London
+        expect(roomListContainer.querySelector('.location-title').textContent).toBe('New York');
+        expect(roomListContainer.querySelectorAll('.room-card').length).toBe(4);
+    });
+
+    test('should select a room and update form input and styling', () => {
+        const firstRoomCard = document.querySelector('.room-card[data-room-id="room101"]');
+        firstRoomCard.click();
+
+        const meetingRoomNameInput = document.getElementById('meetingRoomName');
+        expect(meetingRoomNameInput.value).toBe('Conference Room A');
+        expect(firstRoomCard.classList.contains('active')).toBe(true);
+        expect(selectedRoomId).toBe('room101');
+    });
+
+    test('should deselect previous room and select new room', () => {
+        // Select first room
+        const firstRoomCard = document.querySelector('.room-card[data-room-id="room101"]');
+        firstRoomCard.click();
+        expect(firstRoomCard.classList.contains('active')).toBe(true);
+        expect(selectedRoomId).toBe('room101');
+
+        // Select second room
+        const secondRoomCard = document.querySelector('.room-card[data-room-id="room201"]');
+        secondRoomCard.click();
+
+        expect(firstRoomCard.classList.contains('active')).toBe(false);
+        expect(secondRoomCard.classList.contains('active')).toBe(true);
+        expect(selectedRoomId).toBe('room201');
+        expect(document.getElementById('meetingRoomName').value).toBe('Boardroom C');
+    });
+
+    test('should filter rooms by selected location', () => {
+        const locationFilter = document.getElementById('locationFilter');
+        locationFilter.value = 'London';
+        locationFilter.dispatchEvent(new Event('change'));
+
+        const roomListContainer = document.getElementById('roomListContainer');
+        expect(roomListContainer.querySelectorAll('.room-card').length).toBe(2); // Only London rooms
+        expect(roomListContainer.querySelector('.location-title').textContent).toBe('London');
+    });
+
+    test('should reset form and selection state', () => {
+        // Select a room first
+        const roomCard = document.querySelector('.room-card[data-room-id="room101"]');
+        roomCard.click();
+        document.getElementById('organizerName').value = 'Test User';
+        expect(selectedRoomId).toBe('room101');
+        expect(document.getElementById('meetingRoomName').value).toBe('Conference Room A');
+        expect(document.getElementById('organizerName').value).toBe('Test User');
+
+        resetForm();
+
+        expect(selectedRoomId).toBeNull();
+        expect(document.getElementById('meetingRoomName').value).toBe('');
+        expect(document.getElementById('organizerName').value).toBe('');
+        expect(roomCard.classList.contains('active')).toBe(false);
+    });
+
+    test('should submit form with correct data when room is selected', () => {
+        const roomCard = document.querySelector('.room-card[data-room-id="room102"]');
+        roomCard.click();
+        document.getElementById('bookingDate').value = '2023-10-27T10:00';
+        document.getElementById('duration').value = '2';
+        document.getElementById('organizerName').value = 'Alice';
+        document.getElementById('purpose').value = 'Team Sync';
+
+        const submitButton = document.getElementById('bookingForm').querySelector('button[type="submit"]');
+        submitButton.click();
+
+        expect(console.log).toHaveBeenCalledWith({
+            roomId: 'room102',
+            roomName: 'Huddle Room B',
+            bookingDate: '2023-10-27T10:00',
+            duration: '2',
+            organizerName: 'Alice',
+            purpose: 'Team Sync'
+        });
+        expect(document.getElementById('meetingRoomName').value).toBe(''); // Form should reset
+    });
+
+    test('should not submit form if no room is selected', () => {
+        jest.spyOn(window, 'alert');
+        document.getElementById('bookingDate').value = '2023-10-27T10:00';
+        document.getElementById('duration').value = '1';
+        document.getElementById('organizerName').value = 'Bob';
+        document.getElementById('purpose').value = 'Quick Chat';
+
+        const submitButton = document.getElementById('bookingForm').querySelector('button[type="submit"]');
+        submitButton.click();
+
+        expect(window.alert).toHaveBeenCalledWith('Please select a meeting room first.');
+        expect(console.log).not.toHaveBeenCalled(); // Submission should be prevented
+    });
+
+    test('should apply "readonly" attribute to meeting room name input', () => {
+        const roomCard = document.querySelector('.room-card[data-room-id="room101"]');
+        roomCard.click();
+        const meetingRoomNameInput = document.getElementById('meetingRoomName');
+        expect(meetingRoomNameInput.readOnly).toBe(true);
+    });
+
+    test('should handle DOM elements not existing gracefully', () => {
+        // Temporarily remove a critical element to test robustness
+        const originalBookingForm = document.getElementById('bookingForm');
+        if (originalBookingForm) originalBookingForm.remove();
+        selectedRoomId = 'room101'; // Simulate selection before form removal
+        
+        // Attempting to submit or reset should not crash
+        expect(() => {
+            const submitButton = document.querySelector('button[type="submit"]');
+            if (submitButton) submitButton.click();
+        }).not.toThrow();
+        
+        expect(() => {
+            resetForm();
+        }).not.toThrow();
+
+        // Restore for other tests if necessary, though beforeEach should handle it
+        document.body.innerHTML = mockHtml;
+    });
+});

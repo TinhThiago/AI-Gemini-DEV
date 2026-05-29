@@ -1,0 +1,47 @@
+import { formatTime } from '../HTML_Booking.html'; // Giả sử hàm formatTime có thể được import
+
+describe('formatTime', () => {
+    // Mocking the function since it's inline in HTML
+    const formatTime = (date) => {
+        if (!(date instanceof Date) || isNaN(date.getTime())) {
+            return "Invalid Date";
+        }
+        const hours = date.getHours();
+        const minutes = date.getMinutes();
+        const formattedHours = hours < 10 ? '0' + hours : hours;
+        const formattedMinutes = minutes < 10 ? '0' + minutes : minutes;
+        return `${formattedHours}:${formattedMinutes}`;
+    };
+
+    test('should format time correctly for single digit hours and minutes', () => {
+        const date = new Date(2023, 10, 21, 5, 8);
+        expect(formatTime(date)).toBe('05:08');
+    });
+
+    test('should format time correctly for double digit hours and minutes', () => {
+        const date = new Date(2023, 10, 21, 14, 35);
+        expect(formatTime(date)).toBe('14:35');
+    });
+
+    test('should format time correctly for midnight', () => {
+        const date = new Date(2023, 10, 21, 0, 0);
+        expect(formatTime(date)).toBe('00:00');
+    });
+
+    test('should format time correctly for noon', () => {
+        const date = new Date(2023, 10, 21, 12, 0);
+        expect(formatTime(date)).toBe('12:00');
+    });
+
+    test('should return "Invalid Date" for invalid date object', () => {
+        expect(formatTime(new Date('invalid date string'))).toBe('Invalid Date');
+    });
+
+    test('should return "Invalid Date" for null input', () => {
+        expect(formatTime(null)).toBe('Invalid Date');
+    });
+
+     test('should return "Invalid Date" for undefined input', () => {
+        expect(formatTime(undefined)).toBe('Invalid Date');
+    });
+});

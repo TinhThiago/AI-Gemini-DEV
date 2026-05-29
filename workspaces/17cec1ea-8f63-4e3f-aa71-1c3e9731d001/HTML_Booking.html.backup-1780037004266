@@ -1,0 +1,1085 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meeting Room Booking</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        :root {
+            --primary-color: #3492ab;
+            --primary-dark: #2a768a;
+            --bg-color: #f4f7f6;
+            --card-bg: #ffffff;
+            --text-color: #333333;
+            --text-secondary: #666666;
+            --border-color: #e0e0e0;
+            --error-color: #e74c3c;
+            --success-color: #2ecc71;
+            --warning-color: #f39c12;
+            --shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* --- Header --- */
+        header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 10px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            flex-shrink: 0;
+            height: 60px;
+        }
+
+        header h1 {
+            font-size: 1.2rem;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            white-space: nowrap;
+            margin-right: 20px;
+            flex-shrink: 0;
+        }
+
+        .marquee-container {
+            flex: 1;
+            overflow: hidden;
+            position: relative;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            mask-image: linear-gradient(to right, transparent, black 20px, black 95%, transparent);
+            -webkit-mask-image: linear-gradient(to right, transparent, black 20px, black 95%, transparent);
+        }
+
+        .marquee-text {
+            position: absolute;
+            white-space: nowrap;
+            will-change: transform;
+            animation: marquee 60s linear infinite;
+            animation-delay: -5s;
+            font-size: 0.9rem;
+            display: flex;
+            gap: 40px;
+        }
+
+        .marquee-container:hover .marquee-text {
+            animation-play-state: paused;
+            cursor: default;
+        }
+
+        @keyframes marquee {
+            0% {
+                transform: translateX(100vw);
+            }
+
+            100% {
+                transform: translateX(-100%);
+            }
+        }
+
+        /* --- Layout --- */
+        .container {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+            height: 100%;
+        }
+
+        .left-panel {
+            width: 320px;
+            background: var(--card-bg);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 0;
+        }
+
+        .right-panel {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        /* --- Components --- */
+        .panel-header {
+            padding: 15px;
+            border-bottom: 1px solid var(--border-color);
+            font-weight: 500;
+            color: var(--primary-color);
+        }
+
+        .filter-section {
+            padding: 10px 15px;
+            background: #fafafa;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .filter-select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-family: inherit;
+        }
+
+        .room-list-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px;
+        }
+
+        .location-group {
+            margin-bottom: 15px;
+        }
+
+        .location-title {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+            padding-left: 5px;
+            border-left: 3px solid var(--primary-color);
+        }
+
+        .room-card {
+            background: white;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 12px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .room-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow);
+            border-color: var(--primary-color);
+        }
+
+        .room-card.active {
+            background-color: #eaf6f9;
+            border-color: var(--primary-color);
+        }
+
+        .room-info h3 {
+            font-size: 1rem;
+            margin-bottom: 4px;
+        }
+
+        .room-meta {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            display: flex;
+            gap: 10px;
+        }
+
+        /* Form */
+        .booking-form-card {
+            background: var(--card-bg);
+            border-radius: 8px;
+            padding: 15px 20px;
+            box-shadow: var(--shadow);
+            flex-shrink: 0;
+        }
+
+        .form-title {
+            margin-bottom: 10px;
+            font-size: 1.1rem;
+            color: var(--primary-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .selected-room-badge {
+            background: var(--primary-color);
+            color: white;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            margin-left: 10px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr 1fr;
+            gap: 10px;
+        }
+
+        .form-col-2 {
+            grid-column: span 2;
+        }
+
+        .form-col-4 {
+            grid-column: span 4;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.8rem;
+            margin-bottom: 3px;
+            color: var(--text-secondary);
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-family: inherit;
+            font-size: 0.9rem;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+
+        textarea.form-control {
+            resize: none;
+            height: 38px;
+        }
+
+        .btn-submit {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 500;
+            width: 100%;
+            margin-top: 5px;
+            transition: background 0.2s;
+        }
+
+        .btn-submit:hover {
+            background: var(--primary-dark);
+        }
+
+        .btn-submit:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .btn-submit.btn-update {
+            background: var(--warning-color);
+        }
+
+        .btn-cancel {
+            background: #95a5a6;
+            color: white;
+            border: none;
+            padding: 4px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            margin-left: 10px;
+            display: none;
+        }
+
+        /* Recurring Options Styling */
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            color: var(--primary-color);
+            font-weight: 500;
+            margin-top: 5px;
+            user-select: none;
+        }
+
+        .recurring-options {
+            display: none;
+            grid-column: span 4;
+            background: #f8f9fa;
+            border: 1px dashed #ced4da;
+            padding: 12px;
+            border-radius: 6px;
+            margin-top: 5px;
+        }
+
+        .recurring-options.show {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 15px;
+            align-items: end;
+        }
+
+        .recurring-options .form-group {
+            margin-bottom: 0;
+        }
+
+        /* Calendar */
+        .calendar-section {
+            background: var(--card-bg);
+            border-radius: 8px;
+            box-shadow: var(--shadow);
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            min-height: 400px;
+        }
+
+        .calendar-header {
+            padding: 10px 20px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .calendar-nav {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .calendar-nav button {
+            background: none;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 5px 10px;
+            cursor: pointer;
+            color: var(--text-secondary);
+            height: 32px;
+        }
+
+        .calendar-nav button:hover {
+            background: #f0f0f0;
+            color: var(--primary-color);
+        }
+
+        .calendar-nav input[type="date"] {
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 4px 8px;
+            font-family: inherit;
+            color: var(--text-color);
+            height: 32px;
+            cursor: pointer;
+        }
+
+        .calendar-nav input[type="date"]:hover {
+            border-color: #bbb;
+        }
+
+        .calendar-title {
+            font-weight: 500;
+            font-size: 0.95rem;
+            color: var(--text-secondary);
+            margin-left: 5px;
+        }
+
+        .calendar-grid-container {
+            flex: 1;
+            overflow: auto; /* Changed from overflow-y: auto to allow horizontal scrolling */
+            padding: 10px;
+        }
+
+        .calendar-week {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 10px;
+            min-width: 800px;
+            padding-bottom: 10px;
+        }
+
+        .day-column {
+            background: #fafafa;
+            border: 1px solid #eee;
+            border-radius: 6px;
+            min-height: 200px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .day-column.today {
+            background: #eaf6f9;
+            border-color: #bce0e9;
+        }
+
+        .day-header {
+            padding: 8px;
+            text-align: center;
+            border-bottom: 1px solid #eee;
+            background: rgba(255, 255, 255, 0.5);
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .day-header .date-num {
+            display: block;
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+
+        .day-body {
+            flex: 1;
+            padding: 5px;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        /* Event & Tooltip */
+        .event-card {
+            background: white;
+            border-left: 3px solid var(--primary-color);
+            padding: 6px 8px;
+            border-radius: 4px;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+            font-size: 0.75rem;
+            cursor: pointer;
+            position: relative;
+            transition: transform 0.1s;
+        }
+
+        .event-card:hover {
+            transform: scale(1.02);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            z-index: 10;
+        }
+
+        .event-tooltip {
+            visibility: hidden;
+            width: 260px;
+            background-color: #2d3748;
+            color: #fff;
+            text-align: left;
+            border-radius: 6px;
+            padding: 12px;
+            position: absolute;
+            z-index: 9999;
+            top: 100%;
+            margin-top: 5px;
+            left: 5px;
+            opacity: 0;
+            transition: opacity 0.2s, visibility 0.2s;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+            font-size: 0.8rem;
+            line-height: 1.4;
+            pointer-events: auto;
+        }
+
+        .event-tooltip::after {
+            content: "";
+            position: absolute;
+            bottom: 100%;
+            left: 20px;
+            margin-left: -6px;
+            border-width: 6px;
+            border-style: solid;
+            border-color: transparent transparent #2d3748 transparent;
+        }
+
+        .event-card:hover .event-tooltip {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        .tooltip-row {
+            margin-bottom: 6px;
+        }
+
+        .tooltip-label {
+            color: #cbd5e0; /* Changed from #a0aec0 for better contrast (WCAG AA) */
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            font-weight: bold;
+            display: block;
+            margin-bottom: 2px;
+        }
+
+        .tooltip-value {
+            display: block;
+            word-wrap: break-word;
+        }
+
+        .tooltip-actions {
+            margin-top: 10px;
+            padding-top: 8px;
+            border-top: 1px solid #4a5568;
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn-tool {
+            padding: 4px 10px;
+            border-radius: 3px;
+            border: none;
+            font-size: 0.75rem;
+            cursor: pointer;
+            color: white;
+            flex: 1;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+        }
+
+        .btn-tool-edit {
+            background-color: #3182ce;
+        }
+
+        .btn-tool-edit:hover {
+            background-color: #2b6cb0;
+        }
+
+        .btn-tool-del {
+            background-color: #e53e3e;
+        }
+
+        .btn-tool-del:hover {
+            background-color: #c53030;
+        }
+
+        .btn-tool-copy {
+            background-color: #38a169;
+        }
+
+        .btn-tool-copy:hover {
+            background-color: #2f855a;
+        }
+
+        .event-time {
+            font-weight: bold;
+            color: var(--text-color);
+            margin-bottom: 2px;
+            display: block;
+        }
+
+        .event-title {
+            color: var(--text-secondary);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: block;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            border-radius: 4px;
+            color: white;
+            font-weight: 500;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.3s;
+            z-index: 1000;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .toast.success {
+            background-color: var(--success-color);
+        }
+
+        .toast.error {
+            background-color: var(--error-color);
+        }
+
+        .toast.warning {
+            background-color: var(--warning-color);
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .loading-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.8);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 999;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid var(--primary-color);
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 30px;
+            color: var(--text-secondary);
+            grid-column: span 7;
+        }
+
+        .multi-select {
+            position: relative;
+            width: 100%;
+        }
+
+        .multi-select-header {
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 8px 10px;
+            background: white;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        /* Accessibility */
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border-width: 0;
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <h1><i class="fas fa-calendar-check"></i> Meeting Room Booking</h1>
+        <div class="marquee-container">
+            <div class="marquee-text">
+                <span>Meeting with John Doe on 2023-10-26 (Room Alpha)</span>
+                <span>Team Sync in Room Beta (14:00-15:00)</span>
+                <span>Client Demo in Room Gamma (09:00-10:30)</span>
+                <span>Coffee Break in Lounge (11:00-11:15)</span>
+                <span>Project Planning in Room Delta (16:00-17:00)</span>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="left-panel">
+            <div class="panel-header">Available Rooms</div>
+            <div class="filter-section">
+                <label for="location-filter" class="sr-only">Filter by Location</label>
+                <select id="location-filter" class="filter-select">
+                    <option value="">All Locations</option>
+                    <option value="building_a">Building A</option>
+                    <option value="building_b">Building B</option>
+                </select>
+            </div>
+            <div class="room-list-container">
+                <div class="location-group">
+                    <h4 class="location-title">Building A</h4>
+                    <div class="room-card" data-room-id="alpha" data-room-name="Room Alpha" data-capacity="8">
+                        <div class="room-info">
+                            <h3>Room Alpha</h3>
+                            <div class="room-meta">
+                                <span><i class="fas fa-users"></i> 8 people</span>
+                                <span><i class="fas fa-video"></i> Video Conf.</span>
+                            </div>
+                        </div>
+                        <i class="fas fa-chevron-right"></i>
+                    </div>
+                    <div class="room-card" data-room-id="beta" data-room-name="Room Beta" data-capacity="6">
+                        <div class="room-info">
+                            <h3>Room Beta</h3>
+                            <div class="room-meta">
+                                <span><i class="fas fa-users"></i> 6 people</span>
+                                <span><i class="fas fa-tv"></i> Projector</span>
+                            </div>
+                        </div>
+                        <i class="fas fa-chevron-right"></i>
+                    </div>
+                </div>
+                <div class="location-group">
+                    <h4 class="location-title">Building B</h4>
+                    <div class="room-card" data-room-id="gamma" data-room-name="Room Gamma" data-capacity="12">
+                        <div class="room-info">
+                            <h3>Room Gamma</h3>
+                            <div class="room-meta">
+                                <span><i class="fas fa-users"></i> 12 people</span>
+                                <span><i class="fas fa-video"></i> Video Conf.</span>
+                                <span><i class="fas fa-microphone"></i> Mic System</span>
+                            </div>
+                        </div>
+                        <i class="fas fa-chevron-right"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="right-panel">
+            <div class="booking-form-card">
+                <div class="form-title">
+                    Book Meeting
+                    <span class="selected-room-badge" style="display: none;"></span>
+                </div>
+                <form id="booking-form">
+                    <div class="form-grid">
+                        <div class="form-group form-col-4">
+                            <label for="meeting-title">Meeting Title</label>
+                            <input type="text" id="meeting-title" class="form-control" placeholder="e.g., Project Sync, Client Meeting" required>
+                        </div>
+                        <div class="form-group form-col-4">
+                            <label for="attendees-email">Attendees (Email, comma-separated)</label>
+                            <input type="text" id="attendees-email" class="form-control" placeholder="e.g., alice@example.com, bob@example.com">
+                        </div>
+                        <div class="form-group form-col-2">
+                            <label for="booking-date">Date</label>
+                            <input type="date" id="booking-date" class="form-control" required>
+                        </div>
+                        <div class="form-group form-col-1">
+                            <label for="start-time">Start Time</label>
+                            <input type="time" id="start-time" class="form-control" required>
+                        </div>
+                        <div class="form-group form-col-1">
+                            <label for="end-time">End Time</label>
+                            <input type="time" id="end-time" class="form-control" required>
+                        </div>
+                        <div class="form-group form-col-4">
+                            <label class="checkbox-label" for="is-recurring">
+                                <input type="checkbox" id="is-recurring">
+                                Recurring Meeting
+                            </label>
+                        </div>
+                        <div class="recurring-options" id="recurring-options">
+                            <div class="form-group">
+                                <label for="recurring-frequency">Frequency</label>
+                                <select id="recurring-frequency" class="form-control">
+                                    <option value="daily">Daily</option>
+                                    <option value="weekly">Weekly</option>
+                                    <option value="monthly">Monthly</option>
+                                </select>
+                            </div>
+                            <div class="form-group form-col-2">
+                                <label for="recurring-until">Repeat Until</label>
+                                <input type="date" id="recurring-until" class="form-control">
+                            </div>
+                        </div>
+                        <div class="form-group form-col-4">
+                            <label for="description">Description (Optional)</label>
+                            <textarea id="description" class="form-control" rows="2"></textarea>
+                        </div>
+                        <div class="form-group form-col-4" style="display: flex; gap: 10px;">
+                            <button type="submit" class="btn-submit">Book Now</button>
+                            <button type="button" class="btn-cancel">Cancel</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <div class="calendar-section">
+                <div class="calendar-header">
+                    <div class="calendar-nav">
+                        <button><i class="fas fa-chevron-left"></i></button>
+                        <input type="date" value="2023-10-23">
+                        <button><i class="fas fa-chevron-right"></i></button>
+                        <span class="calendar-title">October 2023</span>
+                    </div>
+                    <button class="btn-tool">Today</button>
+                </div>
+                <div class="calendar-grid-container">
+                    <div class="calendar-week">
+                        <div class="day-column">
+                            <div class="day-header">Mon <span class="date-num">23</span></div>
+                            <div class="day-body">
+                                <div class="event-card">
+                                    <span class="event-time">09:00 - 10:00</span>
+                                    <span class="event-title">Daily Standup</span>
+                                    <div class="event-tooltip">
+                                        <div class="tooltip-row">
+                                            <span class="tooltip-label">Title</span>
+                                            <span class="tooltip-value">Daily Standup</span>
+                                        </div>
+                                        <div class="tooltip-row">
+                                            <span class="tooltip-label">Room</span>
+                                            <span class="tooltip-value">Room Alpha</span>
+                                        </div>
+                                        <div class="tooltip-row">
+                                            <span class="tooltip-label">Time</span>
+                                            <span class="tooltip-value">09:00 - 10:00</span>
+                                        </div>
+                                        <div class="tooltip-row">
+                                            <span class="tooltip-label">Attendees</span>
+                                            <span class="tooltip-value">Team A</span>
+                                        </div>
+                                        <div class="tooltip-row">
+                                            <span class="tooltip-label">Description</span>
+                                            <span class="tooltip-value">Discuss daily progress and blockers.</span>
+                                        </div>
+                                        <div class="tooltip-actions">
+                                            <button class="btn-tool btn-tool-edit"><i class="fas fa-edit"></i> Edit</button>
+                                            <button class="btn-tool btn-tool-del"><i class="fas fa-trash"></i> Delete</button>
+                                            <button class="btn-tool btn-tool-copy"><i class="fas fa-copy"></i> Copy</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="day-column today">
+                            <div class="day-header">Tue <span class="date-num">24</span></div>
+                            <div class="day-body">
+                                <div class="event-card">
+                                    <span class="event-time">10:00 - 11:00</span>
+                                    <span class="event-title">Client Review</span>
+                                    <div class="event-tooltip">
+                                        <div class="tooltip-row">
+                                            <span class="tooltip-label">Title</span>
+                                            <span class="tooltip-value">Client Review</span>
+                                        </div>
+                                        <div class="tooltip-row">
+                                            <span class="tooltip-label">Room</span>
+                                            <span class="tooltip-value">Room Gamma</span>
+                                        </div>
+                                        <div class="tooltip-row">
+                                            <span class="tooltip-label">Time</span>
+                                            <span class="tooltip-value">10:00 - 11:00</span>
+                                        </div>
+                                        <div class="tooltip-row">
+                                            <span class="tooltip-label">Attendees</span>
+                                            <span class="tooltip-value">Client Team, Project Managers</span>
+                                        </div>
+                                        <div class="tooltip-row">
+                                            <span class="tooltip-label">Description</span>
+                                            <span class="tooltip-value">Review project milestones and next steps.</span>
+                                        </div>
+                                        <div class="tooltip-actions">
+                                            <button class="btn-tool btn-tool-edit"><i class="fas fa-edit"></i> Edit</button>
+                                            <button class="btn-tool btn-tool-del"><i class="fas fa-trash"></i> Delete</button>
+                                            <button class="btn-tool btn-tool-copy"><i class="fas fa-copy"></i> Copy</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="day-column">
+                            <div class="day-header">Wed <span class="date-num">25</span></div>
+                            <div class="day-body">
+                                <div class="event-card">
+                                    <span class="event-time">14:00 - 15:30</span>
+                                    <span class="event-title">Design Sync</span>
+                                    <div class="event-tooltip">
+                                        <div class="tooltip-row">
+                                            <span class="tooltip-label">Title</span>
+                                            <span class="tooltip-value">Design Sync</span>
+                                        </div>
+                                        <div class="tooltip-row">
+                                            <span class="tooltip-label">Room</span>
+                                            <span class="tooltip-value">Room Beta</span>
+                                        </div>
+                                        <div class="tooltip-row">
+                                            <span class="tooltip-label">Time</span>
+                                            <span class="tooltip-value">14:00 - 15:30</span>
+                                        </div>
+                                        <div class="tooltip-row">
+                                            <span class="tooltip-label">Attendees</span>
+                                            <span class="tooltip-value">Design Team</span>
+                                        </div>
+                                        <div class="tooltip-row">
+                                            <span class="tooltip-label">Description</span>
+                                            <span class="tooltip-value">Review new UI/UX designs.</span>
+                                        </div>
+                                        <div class="tooltip-actions">
+                                            <button class="btn-tool btn-tool-edit"><i class="fas fa-edit"></i> Edit</button>
+                                            <button class="btn-tool btn-tool-del"><i class="fas fa-trash"></i> Delete</button>
+                                            <button class="btn-tool btn-tool-copy"><i class="fas fa-copy"></i> Copy</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="day-column">
+                            <div class="day-header">Thu <span class="date-num">26</span></div>
+                            <div class="day-body">
+                                <div class="event-card">
+                                    <span class="event-time">09:00 - 10:00</span>
+                                    <span class="event-title">Sprint Planning</span>
+                                    <div class="event-tooltip">
+                                        <div class="tooltip-row">
+                                            <span class="tooltip-label">Title</span>
+                                            <span class="tooltip-value">Sprint Planning</span>
+                                        </div>
+                                        <div class="tooltip-row">
+                                            <span class="tooltip-label">Room</span>
+                                            <span class="tooltip-value">Room Alpha</span>
+                                        </div>
+                                        <div class="tooltip-row">
+                                            <span class="tooltip-label">Time</span>
+                                            <span class="tooltip-value">09:00 - 10:00</span>
+                                        </div>
+                                        <div class="tooltip-row">
+                                            <span class="tooltip-label">Attendees</span>
+                                            <span class="tooltip-value">Development Team</span>
+                                        </div>
+                                        <div class="tooltip-row">
+                                            <span class="tooltip-label">Description</span>
+                                            <span class="tooltip-value">Plan tasks for the upcoming sprint.</span>
+                                        </div>
+                                        <div class="tooltip-actions">
+                                            <button class="btn-tool btn-tool-edit"><i class="fas fa-edit"></i> Edit</button>
+                                            <button class="btn-tool btn-tool-del"><i class="fas fa-trash"></i> Delete</button>
+                                            <button class="btn-tool btn-tool-copy"><i class="fas fa-copy"></i> Copy</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="day-column">
+                            <div class="day-header">Fri <span class="date-num">27</span></div>
+                            <div class="day-body">
+                                <div class="empty-state">No meetings scheduled</div>
+                            </div>
+                        </div>
+                        <div class="day-column">
+                            <div class="day-header">Sat <span class="date-num">28</span></div>
+                            <div class="day-body">
+                                <div class="empty-state">Weekend</div>
+                            </div>
+                        </div>
+                        <div class="day-column">
+                            <div class="day-header">Sun <span class="date-num">29</span></div>
+                            <div class="day-body">
+                                <div class="empty-state">Weekend</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="toast success">Booking successful!</div>
+            <div class="toast error">Booking failed. Please try again.</div>
+            <div class="toast warning">Room already booked for this time.</div>
+            <div class="loading-overlay">
+                <div class="spinner"></div>
+            </div>
+        </div>
+    </div>
+    <!-- Script for multi-select, etc. would go here -->
+    <!-- For demonstration, adding a minimal script to toggle recurring options and activate room cards -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const isRecurringCheckbox = document.getElementById('is-recurring');
+            const recurringOptions = document.getElementById('recurring-options');
+            const roomCards = document.querySelectorAll('.room-card');
+            const selectedRoomBadge = document.querySelector('.selected-room-badge');
+            const formTitle = document.querySelector('.form-title');
+            const bookingForm = document.getElementById('booking-form');
+            const submitButton = bookingForm.querySelector('.btn-submit');
+            const cancelButton = bookingForm.querySelector('.btn-cancel');
+
+            isRecurringCheckbox.addEventListener('change', function() {
+                if (this.checked) {
+                    recurringOptions.classList.add('show');
+                } else {
+                    recurringOptions.classList.remove('show');
+                }
+            });
+
+            roomCards.forEach(card => {
+                card.addEventListener('click', function() {
+                    // Remove 'active' from all other cards
+                    roomCards.forEach(rc => rc.classList.remove('active'));
+                    // Add 'active' to the clicked card
+                    this.classList.add('active');
+
+                    // Update selected room badge
+                    const roomName = this.dataset.roomName;
+                    selectedRoomBadge.textContent = roomName;
+                    selectedRoomBadge.style.display = 'inline-block';
+                    formTitle.classList.add('has-room-selected'); // A hypothetical class for styling
+                });
+            });
+
+            // Handle form submission (example - would typically involve AJAX)
+            bookingForm.addEventListener('submit', function(event) {
+                event.preventDefault();
+                console.log('Form submitted!');
+                // Here you would typically gather form data and send it to a backend.
+                // For this static HTML, we just log.
+                alert('Booking request sent for: ' + document.getElementById('meeting-title').value);
+                // Simulate loading
+                document.querySelector('.loading-overlay').style.display = 'flex';
+                setTimeout(() => {
+                    document.querySelector('.loading-overlay').style.display = 'none';
+                    // Simulate success toast
+                    const toast = document.querySelector('.toast.success');
+                    toast.classList.add('show');
+                    setTimeout(() => toast.classList.remove('show'), 3000);
+                    bookingForm.reset(); // Clear form
+                    selectedRoomBadge.style.display = 'none'; // Hide badge
+                    roomCards.forEach(rc => rc.classList.remove('active')); // Deactivate room cards
+                }, 1500);
+            });
+
+            // Handle cancel button (example - would clear form)
+            cancelButton.addEventListener('click', function() {
+                bookingForm.reset(); // Clear form
+                recurringOptions.classList.remove('show'); // Hide recurring options if checked
+                selectedRoomBadge.style.display = 'none'; // Hide badge
+                roomCards.forEach(rc => rc.classList.remove('active')); // Deactivate room cards
+                console.log('Form cancelled.');
+            });
+
+            // Initial state for recurring options
+            if (isRecurringCheckbox.checked) {
+                recurringOptions.classList.add('show');
+            } else {
+                recurringOptions.classList.remove('show');
+            }
+        });
+    </script>
+</body>
+
+</html>

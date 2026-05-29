@@ -1,0 +1,1953 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meeting Room Booking</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        :root {
+            --primary-color: #3492ab;
+            --primary-dark: #2a768a;
+            --bg-color: #f4f7f6;
+            --card-bg: #ffffff;
+            --text-color: #333333;
+            --text-secondary: #666666;
+            --border-color: #e0e0e0;
+            --error-color: #e74c3c;
+            --success-color: #2ecc71;
+            --warning-color: #f39c12;
+            --shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* --- Header --- */
+        header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 10px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            flex-shrink: 0;
+            height: 60px;
+        }
+
+        header h1 {
+            font-size: 1.2rem;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            white-space: nowrap;
+            margin-right: 20px;
+            flex-shrink: 0;
+        }
+
+        .marquee-container {
+            flex: 1;
+            overflow: hidden;
+            position: relative;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            mask-image: linear-gradient(to right, transparent, black 20px, black 95%, transparent);
+            -webkit-mask-image: linear-gradient(to right, transparent, black 20px, black 95%, transparent);
+        }
+
+        .marquee-text {
+            position: absolute;
+            white-space: nowrap;
+            will-change: transform;
+            animation: marquee 60s linear infinite;
+            animation-delay: -5s;
+            font-size: 0.9rem;
+            display: flex;
+            gap: 40px;
+        }
+
+        .marquee-container:hover .marquee-text {
+            animation-play-state: paused;
+            cursor: default;
+        }
+
+        @keyframes marquee {
+            0% {
+                transform: translateX(100vw);
+            }
+
+            100% {
+                transform: translateX(-100%);
+            }
+        }
+
+        /* --- Layout --- */
+        .container {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+            height: 100%;
+        }
+
+        .left-panel {
+            width: 320px;
+            background: var(--card-bg);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 0;
+        }
+
+        .right-panel {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        /* --- Components --- */
+        .panel-header {
+            padding: 15px;
+            border-bottom: 1px solid var(--border-color);
+            font-weight: 500;
+            color: var(--primary-color);
+        }
+
+        .filter-section {
+            padding: 10px 15px;
+            background: #fafafa;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .filter-select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-family: inherit;
+        }
+
+        .room-list-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px;
+        }
+
+        .location-group {
+            margin-bottom: 15px;
+        }
+
+        .location-title {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+            padding-left: 5px;
+            border-left: 3px solid var(--primary-color);
+        }
+
+        .room-card {
+            background: white;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 12px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .room-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow);
+            border-color: var(--primary-color);
+        }
+
+        .room-card.active {
+            background-color: #eaf6f9;
+            border-color: var(--primary-color);
+        }
+
+        .room-info h3 {
+            font-size: 1rem;
+            margin-bottom: 4px;
+        }
+
+        .room-meta {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            display: flex;
+            gap: 10px;
+        }
+
+        /* Form */
+        .booking-form-card {
+            background: var(--card-bg);
+            border-radius: 8px;
+            padding: 15px 20px;
+            box-shadow: var(--shadow);
+            flex-shrink: 0;
+        }
+
+        .form-title {
+            margin-bottom: 10px;
+            font-size: 1.1rem;
+            color: var(--primary-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .selected-room-badge {
+            background: var(--primary-color);
+            color: white;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            margin-left: 10px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr 1fr;
+            gap: 10px;
+        }
+
+        .form-col-2 {
+            grid-column: span 2;
+        }
+
+        .form-col-4 {
+            grid-column: span 4;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.8rem;
+            margin-bottom: 3px;
+            color: var(--text-secondary);
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-family: inherit;
+            font-size: 0.9rem;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+
+        textarea.form-control {
+            resize: none;
+            height: 38px;
+        }
+
+        .btn-submit {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 500;
+            width: 100%;
+            margin-top: 5px;
+            transition: background 0.2s;
+        }
+
+        .btn-submit:hover {
+            background: var(--primary-dark);
+        }
+
+        .btn-submit:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .btn-submit.btn-update {
+            background: var(--warning-color);
+        }
+
+        .btn-cancel {
+            background: #95a5a6;
+            color: white;
+            border: none;
+            padding: 4px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            margin-left: 10px;
+            display: none;
+        }
+
+        /* Recurring Options Styling */
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            color: var(--primary-color);
+            font-weight: 500;
+            margin-top: 5px;
+            user-select: none;
+        }
+
+        .recurring-options {
+            display: none;
+            grid-column: span 4;
+            background: #f8f9fa;
+            border: 1px dashed #ced4da;
+            padding: 12px;
+            border-radius: 6px;
+            margin-top: 5px;
+        }
+
+        .recurring-options.show {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 15px;
+            align-items: end;
+        }
+
+        .recurring-options .form-group {
+            margin-bottom: 0;
+        }
+
+        /* Calendar */
+        .calendar-section {
+            background: var(--card-bg);
+            border-radius: 8px;
+            box-shadow: var(--shadow);
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            min-height: 400px;
+        }
+
+        .calendar-header {
+            padding: 10px 20px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .calendar-nav {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .calendar-nav button {
+            background: none;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 5px 10px;
+            cursor: pointer;
+            color: var(--text-secondary);
+            height: 32px;
+        }
+
+        .calendar-nav button:hover {
+            background: #f0f0f0;
+            color: var(--primary-color);
+        }
+
+        .calendar-nav input[type="date"] {
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 4px 8px;
+            font-family: inherit;
+            color: var(--text-color);
+            height: 32px;
+            cursor: pointer;
+        }
+
+        .calendar-nav input[type="date"]:hover {
+            border-color: #bbb;
+        }
+
+        .calendar-title {
+            font-weight: 500;
+            font-size: 0.95rem;
+            color: var(--text-secondary);
+            margin-left: 5px;
+        }
+
+        .calendar-grid-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px;
+        }
+
+        .calendar-week {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 10px;
+            min-width: 800px;
+            padding-bottom: 10px;
+        }
+
+        .day-column {
+            background: #fafafa;
+            border: 1px solid #eee;
+            border-radius: 6px;
+            min-height: 200px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .day-column.today {
+            background: #eaf6f9;
+            border-color: #bce0e9;
+        }
+
+        .day-header {
+            padding: 8px;
+            text-align: center;
+            border-bottom: 1px solid #eee;
+            background: rgba(255, 255, 255, 0.5);
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .day-header .date-num {
+            display: block;
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+
+        .day-body {
+            flex: 1;
+            padding: 5px;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        /* Event & Tooltip */
+        .event-card {
+            background: white;
+            border-left: 3px solid var(--primary-color);
+            padding: 6px 8px;
+            border-radius: 4px;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+            font-size: 0.75rem;
+            cursor: pointer;
+            position: relative;
+            transition: transform 0.1s;
+        }
+
+        .event-card:hover {
+            transform: scale(1.02);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            z-index: 10;
+        }
+
+        .event-tooltip {
+            visibility: hidden;
+            width: 260px;
+            background-color: #2d3748;
+            color: #fff;
+            text-align: left;
+            border-radius: 6px;
+            padding: 12px;
+            position: absolute;
+            z-index: 9999;
+            top: 100%;
+            margin-top: 5px;
+            left: 5px;
+            opacity: 0;
+            transition: opacity 0.2s, visibility 0.2s;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+            font-size: 0.8rem;
+            line-height: 1.4;
+            pointer-events: auto;
+        }
+
+        .event-tooltip::after {
+            content: "";
+            position: absolute;
+            bottom: 100%;
+            left: 20px;
+            margin-left: -6px;
+            border-width: 6px;
+            border-style: solid;
+            border-color: transparent transparent #2d3748 transparent;
+        }
+
+        .event-card:hover .event-tooltip {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        .tooltip-row {
+            margin-bottom: 6px;
+        }
+
+        .tooltip-label {
+            color: #a0aec0;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            font-weight: bold;
+            display: block;
+            margin-bottom: 2px;
+        }
+
+        .tooltip-value {
+            display: block;
+            word-wrap: break-word;
+        }
+
+        .tooltip-actions {
+            margin-top: 10px;
+            padding-top: 8px;
+            border-top: 1px solid #4a5568;
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn-tool {
+            padding: 4px 10px;
+            border-radius: 3px;
+            border: none;
+            font-size: 0.75rem;
+            cursor: pointer;
+            color: white;
+            flex: 1;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+        }
+
+        .btn-tool-edit {
+            background-color: #3182ce;
+        }
+
+        .btn-tool-edit:hover {
+            background-color: #2b6cb0;
+        }
+
+        .btn-tool-del {
+            background-color: #e53e3e;
+        }
+
+        .btn-tool-del:hover {
+            background-color: #c53030;
+        }
+
+        .btn-tool-copy {
+            background-color: #38a169;
+        }
+
+        .btn-tool-copy:hover {
+            background-color: #2f855a;
+        }
+
+        .event-time {
+            font-weight: bold;
+            color: var(--text-color);
+            margin-bottom: 2px;
+            display: block;
+        }
+
+        .event-title {
+            color: var(--text-secondary);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: block;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            border-radius: 4px;
+            color: white;
+            font-weight: 500;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.3s;
+            z-index: 1000;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .toast.success {
+            background-color: var(--success-color);
+        }
+
+        .toast.error {
+            background-color: var(--error-color);
+        }
+
+        .toast.warning {
+            background-color: var(--warning-color);
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .loading-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.8);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 999;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid var(--primary-color);
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 30px;
+            color: var(--text-secondary);
+            grid-column: span 7;
+        }
+
+        .multi-select {
+            position: relative;
+            width: 100%;
+        }
+
+        .multi-select-header {
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 8px 10px;
+            background: white;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 38px;
+            min-height: 38px;
+            max-height: 38px;
+            overflow: hidden;
+        }
+
+        #selectedUserText {
+            display: block;
+            max-width: calc(100% - 25px);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .multi-select-dropdown {
+            display: none;
+            position: absolute;
+            top: 42px;
+            left: 0;
+            width: 100%;
+            height: 260px;
+            max-height: 260px;
+            overflow-y: auto;
+            background: white;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            z-index: 99999;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .multi-select-dropdown.show {
+            display: block;
+        }
+
+        .user-search {
+            position: sticky;
+            top: 0;
+            background: white;
+            padding: 8px;
+            border-bottom: 1px solid var(--border-color);
+            z-index: 2;
+        }
+
+        .user-search input {
+            width: 100%;
+            padding: 7px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+        }
+
+        .user-option {
+            padding: 8px 10px;
+            display: grid;
+            grid-template-columns: 18px 1fr;
+            gap: 8px;
+            align-items: start;
+            cursor: pointer;
+            line-height: 1.25;
+        }
+
+        .user-option input {
+            margin-top: 2px;
+        }
+
+        .user-option:hover {
+            background: #eaf6f9;
+        }
+
+        .user-option-text {
+            word-break: break-word;
+        }
+
+        .btn-tool-message {
+            background-color: #6264a7;
+        }
+
+        .btn-tool-message:hover {
+            background-color: #4b4d8c;
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <h1><i class="fa-solid fa-calendar-check"></i> Meeting Room Booking</h1>
+        <div class="marquee-container">
+            <div class="marquee-text">
+                <span>⭐ <strong>Đặt nhanh - Họp thông minh</strong> </span>
+                <span>⭐ <strong>Kết nối nhanh - Trao đổi hiệu quả</strong> </span>
+                <span>⭐ <strong>Đúng phòng - Đúng giờ - Đúng mục tiêu</strong> </span>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <!-- Left Panel: Rooms -->
+        <div class="left-panel">
+            <div class="panel-header">Select a Room</div>
+            <div class="filter-section">
+                <select id="FloorFilter" class="filter-select">
+                    <option value="all">All Floors</option>
+                </select>
+            </div>
+            <div id="roomListContainer" class="room-list-container">
+                <div class="loading-overlay" style="display:flex; position:relative; height: 100px;">
+                    <div class="spinner"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Panel -->
+        <div class="right-panel">
+
+            <!-- Booking Form -->
+            <div class="booking-form-card">
+                <div class="form-title">
+                    <span>
+                        <span id="formTitleText">New Booking</span>
+                        <button type="button" id="btnCancelEdit" class="btn-cancel" onclick="resetForm()">Cancel
+                            Edit</button>
+                    </span>
+                    <span id="selectedRoomBadge" class="selected-room-badge" style="display:none;"></span>
+                </div>
+
+                <form id="bookingForm">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Date</label>
+                            <input type="date" id="inputDate" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Chọn user </label>
+                            <div class="multi-select" id="userMultiSelect">
+                                <div class="multi-select-header" onclick="toggleUserDropdown(event)">
+                                    <span id="selectedUserText">Chọn user...</span>
+                                    <i class="fa-solid fa-chevron-down"></i>
+                                </div>
+                                <div class="multi-select-dropdown" id="userDropdown"></div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Start</label>
+                            <input type="time" id="inputStartTime" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label>End</label>
+                            <input type="time" id="inputEndTime" class="form-control" required>
+                        </div>
+
+                        <div class="form-group form-col-2">
+                            <label>Title</label>
+                            <input type="text" id="inputTitle" class="form-control" placeholder="Subject" required>
+                        </div>
+                        <div class="form-group form-col-2">
+                            <label>Description</label>
+                            <textarea id="inputDesc" class="form-control" placeholder="Details..."></textarea>
+                        </div>
+
+                        <!-- NEW: Recurring Booking Option -->
+                        <div class="form-group form-col-4" id="recurringToggleContainer">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="inputIsRecurring" onchange="toggleRecurringOptions()">
+                                🔄 Đặt phòng lặp lại (Booking Seri)
+                            </label>
+                        </div>
+
+                        <div id="recurringOptions" class="recurring-options">
+                            <div class="form-group">
+                                <label>Tần suất lặp lại</label>
+                                <select id="inputRecurrenceType" class="form-control">
+                                    <option value="daily">Hằng ngày</option>
+                                    <option value="weekly">Hằng tuần</option>
+                                    <option value="monthly">Hằng tháng</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Lặp lại đến ngày</label>
+                                <input type="date" id="inputRecurrenceEndDate" class="form-control">
+                            </div>
+                            <div class="form-group">
+                                <label class="checkbox-label" style="margin-top: 25px;">
+                                    <input type="checkbox" id="inputSkipWeekends" checked> Bỏ qua Thứ 7, Chủ Nhật
+                                </label>
+                            </div>
+                        </div>
+
+                    </div>
+                    <button type="submit" id="btnBook" class="btn-submit" disabled>Book Room</button>
+                    <div id="formFeedback"
+                        style="color: var(--error-color); font-size: 0.85rem; margin-top: 5px; height: 18px;"></div>
+                </form>
+            </div>
+
+            <!-- Calendar Section -->
+            <div class="calendar-section">
+                <div class="calendar-header">
+                    <div class="calendar-nav">
+                        <button type="button" onclick="changeRange(-1)"><i
+                                class="fa-solid fa-chevron-left"></i></button>
+
+                        <div style="display:flex; align-items:center;">
+                            <input type="date" id="calendarViewDate" title="Jump to date">
+                            <span id="calendarRangeDisplay" class="calendar-title">Loading...</span>
+                        </div>
+
+                        <button type="button" onclick="changeRange(1)"><i
+                                class="fa-solid fa-chevron-right"></i></button>
+                    </div>
+                    <button onclick="refreshCalendar()"
+                        style="background:none; border:none; color:var(--primary-color); cursor:pointer;"><i
+                            class="fa-solid fa-sync"></i> Refresh</button>
+                </div>
+                <div id="calendarContainer" class="calendar-grid-container">
+                    <div class="empty-state">Select a room to view calendar</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast" class="toast">Action completed</div>
+    <div id="globalLoading" class="loading-overlay">
+        <div class="spinner"></div>
+    </div>
+
+    <script>
+        // ==========================================
+        // 1. CONFIGURATION
+        // ==========================================
+        const TABLES = {
+            ROOM: 'gts_room',
+            BOOKING: 'gts_booking',
+            FLOOR: 'gts_floor',
+            USER: 'systemuser'
+        };
+        const FIELDS = {
+            ROOM: {
+                ID: 'gts_roomid',
+                NAME: 'gts_name',
+                FLOOR: '_gts_floor_value',
+                FLOOR_FORMATTED: '_gts_floor_value@OData.Community.Display.V1.FormattedValue'
+            },
+            BOOKING: {
+                ID: 'gts_bookingid',
+                TITLE: 'gts_title',
+                DESC: 'gts_description',
+                START: 'gts_starttime',
+                END: 'gts_endtime',
+                CREATED_BY_SELECT: '_createdby_value',
+                CREATED_BY_FORMATTED: '_createdby_value@OData.Community.Display.V1.FormattedValue',
+                ROOM_BIND: 'gts_Room@odata.bind',
+                MEMBERS: 'gts_test',
+                LIST_MEMBERS: 'gts_list'
+            },
+            FLOOR: {
+                ID: 'gts_floorid',
+                NAME: 'gts_name',
+                CODE: 'gts_code'
+            }
+        };
+        const TEAMS_FLOW_URL = "https://248b0768dd3becd28860b8e95f6002.88.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/6e73b6371441461398542969c3d686a7/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=3ftlV0uVJamyPhesaK3d24hE6amRsld4IZ7pS51S3cs";
+        // State
+        let appState = {
+            rooms: [],
+            floors: [],
+            bookings: [],
+            selectedRoom: null,
+            viewStartDate: new Date(),
+            editingBookingId: null // Track if editing
+        };
+
+        appState.viewStartDate.setHours(0, 0, 0, 0);
+
+        // ==========================================
+        // 2. DATA LAYER
+        // ==========================================
+        async function fetchUsersService() {
+            const xrm = getXrm();
+            if (!xrm) return [];
+
+            const query = "?$select=systemuserid,fullname,internalemailaddress&$filter=isdisabled eq false and accessmode ne 3 and accessmode ne 5 and applicationid eq null and systemmanagedusertype eq 0 &$orderby=fullname asc";
+            const result = await xrm.WebApi.retrieveMultipleRecords(TABLES.USER, query);
+            return result.entities;
+        }
+
+        function populateUserCombobox(users) {
+            const dropdown = document.getElementById("userDropdown");
+            dropdown.innerHTML = `
+                                <div class="user-search">
+                                    <input type="text" id="userSearchInput" placeholder="Tìm user..." onkeyup="filterUsers()">
+                                </div>
+                                <div id="userOptionList"></div>
+                                `;
+
+            const list = document.getElementById("userOptionList");
+
+            users.forEach(u => {
+                const item = document.createElement("label");
+                item.className = "user-option";
+
+                item.innerHTML = `
+            <input type="checkbox"
+                class="user-checkbox"
+                value="${u.systemuserid}"
+                data-name="${u.fullname}"
+                data-email="${u.internalemailaddress}"
+                onchange="updateSelectedUserText()">
+            <span class="user-option-text">${u.fullname} - ${u.internalemailaddress}</span>
+        `;
+
+                list.appendChild(item);
+            });
+        }
+        async function associateBookingUsers(bookingId, selectedUsers) {
+            const xrm = getXrm();
+            const cleanBookingId = bookingId.replace("{", "").replace("}", "");
+
+            for (const user of selectedUsers) {
+                const cleanUserId = user.id.replace("{", "").replace("}", "");
+
+                const request = {
+                    target: {
+                        entityType: "gts_booking",
+                        id: cleanBookingId
+                    },
+                    relatedEntities: [
+                        {
+                            entityType: "systemuser",
+                            id: cleanUserId
+                        }
+                    ],
+                    relationship: "gts_Booking_SystemUser_SystemUser",
+
+                    getMetadata: function () {
+                        return {
+                            boundParameter: null,
+                            parameterTypes: {
+                                target: {
+                                    typeName: "mscrm.gts_booking",
+                                    structuralProperty: 5
+                                },
+                                relatedEntities: {
+                                    typeName: "Collection(mscrm.systemuser)",
+                                    structuralProperty: 4
+                                },
+                                relationship: {
+                                    typeName: "Edm.String",
+                                    structuralProperty: 1
+                                }
+                            },
+                            operationType: 2,
+                            operationName: "Associate"
+                        };
+                    }
+                };
+
+                await xrm.WebApi.online.execute(request);
+            }
+        }
+        function filterUsers() {
+            const keyword = document.getElementById("userSearchInput").value.toLowerCase();
+            const options = document.querySelectorAll("#userOptionList .user-option");
+
+            options.forEach(option => {
+                const text = option.innerText.toLowerCase();
+                option.style.display = text.includes(keyword) ? "grid" : "none";
+            });
+        }
+        function toggleUserDropdown(event) {
+            if (event) event.stopPropagation();
+            document.getElementById("userDropdown").classList.toggle("show");
+        }
+
+        function updateSelectedUserText() {
+            const checked = Array.from(document.querySelectorAll(".user-checkbox:checked"));
+            const text = document.getElementById("selectedUserText");
+            const header = document.querySelector(".multi-select-header");
+
+            if (checked.length === 0) {
+                text.innerText = "Chọn user...";
+                header.title = "";
+                return;
+            }
+
+            const names = checked.map(cb => cb.getAttribute("data-name"));
+            const fullText = names.join(", ");
+
+            text.innerText = checked.length <= 2
+                ? fullText
+                : `Đã chọn ${checked.length} user`;
+
+            header.title = fullText;
+        }
+        function setSelectedUsersFromGtsTest(gtsTestValue) {
+            document.querySelectorAll(".user-checkbox").forEach(cb => cb.checked = false);
+
+            if (!gtsTestValue) {
+                updateSelectedUserText();
+                return;
+            }
+
+            try {
+                const data = typeof gtsTestValue === "string"
+                    ? JSON.parse(gtsTestValue)
+                    : gtsTestValue;
+
+                const userIds = (data.actions || []).map(a =>
+                    String(a.guid).replace(/[{}]/g, "").toLowerCase()
+                );
+
+                document.querySelectorAll(".user-checkbox").forEach(cb => {
+                    const cbId = String(cb.value).replace(/[{}]/g, "").toLowerCase();
+                    cb.checked = userIds.includes(cbId);
+                });
+
+                updateSelectedUserText();
+            } catch (err) {
+                console.error("Không parse được gts_test:", err, gtsTestValue);
+                updateSelectedUserText();
+            }
+        }
+        function getXrm() {
+            if (typeof Xrm !== 'undefined') return Xrm;
+            if (window.parent && typeof window.parent.Xrm !== 'undefined') return window.parent.Xrm;
+            return null;
+        }
+
+        async function fetchRoomsService() {
+            const xrm = getXrm();
+            if (!xrm) { showToast("Xrm not found", "error"); return []; }
+            try {
+                const query = `?$select=${FIELDS.ROOM.NAME},${FIELDS.ROOM.FLOOR}&$filter=statecode eq 0&$orderby=${FIELDS.ROOM.NAME} asc`;
+                const result = await xrm.WebApi.retrieveMultipleRecords(TABLES.ROOM, query);
+                return result.entities;
+            } catch (error) {
+                console.error(error); showToast("Error loading rooms", "error"); return [];
+            }
+        }
+
+        async function fetchFloorsService() {
+            const xrm = getXrm();
+            if (!xrm) return [];
+            try {
+                const query = `?$select=${FIELDS.FLOOR.NAME},${FIELDS.FLOOR.CODE}&$filter=statecode eq 0&$orderby=${FIELDS.FLOOR.CODE} asc`;
+                const result = await xrm.WebApi.retrieveMultipleRecords(TABLES.FLOOR, query);
+                return result.entities;
+            } catch (error) {
+                console.error(error); showToast("Error loading floors", "error"); return [];
+            }
+        }
+
+        async function fetchBookingsRangeService(roomId, startDate, endDate) {
+            const xrm = getXrm();
+            if (!xrm) return [];
+            const startISO = startDate.toISOString();
+            const endISO = endDate.toISOString();
+            try {
+                const filter = `_gts_room_value eq ${roomId} and gts_starttime ge ${startISO} and gts_starttime le ${endISO} and statecode eq 0`;
+                const select = `?$select=${FIELDS.BOOKING.TITLE},${FIELDS.BOOKING.START},${FIELDS.BOOKING.END},${FIELDS.BOOKING.CREATED_BY_SELECT},${FIELDS.BOOKING.LIST_MEMBERS},${FIELDS.BOOKING.MEMBERS}`;
+                const query = `${select}&$filter=${filter}&$orderby=${FIELDS.BOOKING.START} asc`;
+                const result = await xrm.WebApi.retrieveMultipleRecords(TABLES.BOOKING, query);
+                return result.entities;
+            } catch (error) {
+                console.error(error); showToast("Error loading calendar", "error"); return [];
+            }
+        }
+
+        async function createBookingService(payload) {
+            const xrm = getXrm();
+            if (!xrm) return { success: false, message: "Xrm not available" };
+            try {
+                const result = await xrm.WebApi.createRecord(TABLES.BOOKING, payload);
+                return { success: true, id: result.id };
+            } catch (error) {
+                return { success: false, message: error.message };
+            }
+        }
+
+        async function updateBookingService(id, payload) {
+            const xrm = getXrm();
+            if (!xrm) return { success: false, message: "Xrm not available" };
+            try {
+                await xrm.WebApi.updateRecord(TABLES.BOOKING, id, payload);
+                return { success: true };
+            } catch (error) {
+                return { success: false, message: error.message };
+            }
+        }
+
+        async function deactivateBookingService(id) {
+            const xrm = getXrm();
+            if (!xrm) return { success: false, message: "Xrm not available" };
+            try {
+                const payload = { statecode: 1, statuscode: 2 };
+                await xrm.WebApi.updateRecord(TABLES.BOOKING, id, payload);
+                return { success: true };
+            } catch (error) {
+                return { success: false, message: error.message };
+            }
+        }
+
+
+        // ==========================================
+        // 3. LOGIC & UI
+        // ==========================================
+
+        async function initApp() {
+            const today = new Date();
+            const y = today.getFullYear();
+            const m = String(today.getMonth() + 1).padStart(2, '0');
+            const d = String(today.getDate()).padStart(2, '0');
+            const dateStr = `${y}-${m}-${d}`;
+
+            document.getElementById('inputDate').value = dateStr;
+            document.getElementById('calendarViewDate').value = dateStr;
+
+            showLoading(true, "roomListContainer");
+
+            const [rooms, floors, users] = await Promise.all([
+                fetchRoomsService(),
+                fetchFloorsService(),
+                fetchUsersService()
+            ]);
+
+            appState.rooms = rooms;
+            appState.floors = floors;
+            appState.users = users;
+
+            renderRooms(rooms);
+            populateFloorFilter(floors);
+            populateUserCombobox(users);
+            showLoading(false, "roomListContainer");
+
+            setupEventListeners();
+            updateCalendarHeader();
+
+            if (rooms.length > 0) {
+                const targetId = 'a6ff113a-f853-f111-bec7-000d3a805ec2';
+                let defaultRoom = rooms.find(r => r[FIELDS.ROOM.ID] === targetId);
+                if (!defaultRoom) defaultRoom = rooms.find(r => r[FIELDS.ROOM.NAME].toLowerCase().includes("Tầng 01 - Phòng 01"));
+                if (!defaultRoom) defaultRoom = rooms[0];
+                selectRoom(defaultRoom);
+            }
+        }
+        async function sendTeamsNotification(bookingInfo, selectedUsers) {
+            for (const user of selectedUsers) {
+                await fetch(TEAMS_FLOW_URL, {
+                    method: "POST",
+                    headers: {
+                        "Accept": "application/json",
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        thoigian: bookingInfo.timeRange,
+                        ngay: bookingInfo.dateOnly,
+                        diadiem: bookingInfo.roomName,
+                        mail: user.email,
+                        title: bookingInfo.title,
+                        description: bookingInfo.description
+                    })
+                });
+            }
+        }
+        function setupEventListeners() {
+            document.getElementById('FloorFilter').addEventListener('change', (e) => {
+                const loc = e.target.value;
+                const filtered = loc === 'all' ? appState.rooms : appState.rooms.filter(r => r[FIELDS.ROOM.FLOOR_FORMATTED] === loc);
+                renderRooms(filtered);
+            });
+
+            document.getElementById('bookingForm').addEventListener('submit', handleFormSubmit);
+
+            ['inputDate', 'inputStartTime', 'inputEndTime', 'inputIsRecurring', 'inputRecurrenceEndDate'].forEach(id => {
+                document.getElementById(id).addEventListener('change', validateTimeInputs);
+            });
+
+            document.getElementById('calendarContainer').addEventListener('click', (e) => {
+                const btn = e.target.closest('.btn-tool');
+                if (!btn) return;
+
+                const id = btn.getAttribute('data-id');
+
+                if (btn.classList.contains('btn-tool-edit')) {
+                    handleEditBooking(id);
+                } else if (btn.classList.contains('btn-tool-del')) {
+                    handleDeactivateBooking(id);
+                } else if (btn.classList.contains('btn-tool-copy')) {
+                    handleCopyBooking(id);
+                } else if (btn.classList.contains('btn-tool-message')) {
+                    handleSendMessageBooking(id);
+                }
+            });
+
+            document.getElementById('calendarViewDate').addEventListener('change', (e) => {
+                if (e.target.value) {
+                    const newDate = new Date(e.target.value);
+                    newDate.setHours(0, 0, 0, 0);
+                    appState.viewStartDate = newDate;
+                    updateCalendarHeader();
+                    if (appState.selectedRoom) refreshCalendar();
+                }
+            });
+            document.addEventListener("click", function (e) {
+                const multiSelect = document.getElementById("userMultiSelect");
+                const dropdown = document.getElementById("userDropdown");
+
+                if (!multiSelect.contains(e.target)) {
+                    dropdown.classList.remove("show");
+                }
+            });
+        }
+
+        // --- Room Rendering ---
+        function renderRooms(rooms) {
+            const container = document.getElementById('roomListContainer');
+            container.innerHTML = '';
+            if (rooms.length === 0) { container.innerHTML = '<div style="padding:10px;">No rooms found.</div>'; return; }
+
+            const groups = {};
+            rooms.forEach(room => {
+                const loc = room[FIELDS.ROOM.FLOOR_FORMATTED] || 'Unassigned';
+                if (!groups[loc]) groups[loc] = [];
+                groups[loc].push(room);
+            });
+            for (const [loc, locRooms] of Object.entries(groups)) {
+                const groupDiv = document.createElement('div');
+                groupDiv.className = 'location-group';
+                groupDiv.innerHTML = `<div class="location-title">${loc}</div>`;
+
+                locRooms.forEach(room => {
+                    const card = document.createElement('div');
+                    card.className = `room-card ${appState.selectedRoom && appState.selectedRoom[FIELDS.ROOM.ID] === room[FIELDS.ROOM.ID] ? 'active' : ''}`;
+                    card.onclick = () => selectRoom(room);
+                    card.innerHTML = `
+                        <div class="room-info">
+                            <h3>${room[FIELDS.ROOM.NAME]}</h3>
+                            <div class="room-meta"><span><i class="fa-solid fa-users"></i> </span></div>
+                        </div>
+                        <i class="fa-solid fa-chevron-right" style="color:#ccc; font-size: 0.8rem;"></i>`;
+                    groupDiv.appendChild(card);
+                });
+                container.appendChild(groupDiv);
+            }
+        }
+
+        function populateFloorFilter(floors) {
+            const locations = [...new Set(floors.map(f => f[FIELDS.FLOOR.NAME]).filter(Boolean))];
+            const select = document.getElementById('FloorFilter');
+            select.innerHTML = '<option value="all">All Floors</option>';
+            locations.forEach(loc => {
+                const opt = document.createElement('option');
+                opt.value = loc; opt.innerText = loc; select.appendChild(opt);
+            });
+        }
+
+
+        async function selectRoom(room) {
+            appState.selectedRoom = room;
+            resetForm();
+            document.querySelectorAll('.room-card').forEach(el => el.classList.remove('active'));
+            renderRooms(appState.rooms.filter(r => {
+                const loc = document.getElementById('FloorFilter').value;
+
+                return loc === 'all' || r[FIELDS.ROOM.FLOOR_FORMATTED] === loc;
+            }));
+
+            document.getElementById('btnBook').disabled = false;
+            document.getElementById('selectedRoomBadge').style.display = 'inline-block';
+            document.getElementById('selectedRoomBadge').innerText = room[FIELDS.ROOM.NAME];
+
+            await refreshCalendar();
+        }
+
+        // --- Calendar Logic ---
+
+        function changeRange(offset) {
+            appState.viewStartDate.setDate(appState.viewStartDate.getDate() + (offset * 14));
+            updateCalendarHeader();
+            if (appState.selectedRoom) refreshCalendar();
+        }
+
+        function updateCalendarHeader() {
+            const start = new Date(appState.viewStartDate);
+            const end = new Date(appState.viewStartDate);
+            end.setDate(end.getDate() + 13);
+
+            const options = { month: 'short', day: 'numeric' };
+            document.getElementById('calendarRangeDisplay').innerText =
+                `${start.toLocaleDateString('en-US', options)} - ${end.toLocaleDateString('en-US', options)}`;
+
+            const y = start.getFullYear();
+            const m = String(start.getMonth() + 1).padStart(2, '0');
+            const d = String(start.getDate()).padStart(2, '0');
+            document.getElementById('calendarViewDate').value = `${y}-${m}-${d}`;
+        }
+
+        async function refreshCalendar() {
+            if (!appState.selectedRoom) return;
+            const container = document.getElementById('calendarContainer');
+            container.innerHTML = '<div class="spinner" style="margin: 20px auto;"></div>';
+
+            const start = new Date(appState.viewStartDate);
+            const end = new Date(appState.viewStartDate);
+            end.setDate(end.getDate() + 14);
+            end.setHours(23, 59, 59);
+
+            appState.bookings = await fetchBookingsRangeService(appState.selectedRoom[FIELDS.ROOM.ID], start, end);
+            renderCalendarGrid();
+            validateTimeInputs();
+        }
+
+        function renderCalendarGrid() {
+            const container = document.getElementById('calendarContainer');
+            container.innerHTML = '';
+
+            const weekContainer = document.createElement('div');
+            weekContainer.className = 'calendar-week';
+
+            for (let i = 0; i < 14; i++) {
+                const currentDay = new Date(appState.viewStartDate);
+                currentDay.setDate(currentDay.getDate() + i);
+
+                const year = currentDay.getFullYear();
+                const month = String(currentDay.getMonth() + 1).padStart(2, '0');
+                const day = String(currentDay.getDate()).padStart(2, '0');
+                const dayStr = `${year}-${month}-${day}`;
+
+                const isToday = currentDay.toDateString() === new Date().toDateString();
+
+                const col = document.createElement('div');
+                col.className = `day-column ${isToday ? 'today' : ''}`;
+
+                const dayName = currentDay.toLocaleDateString('en-US', { weekday: 'short' });
+                const dayNum = currentDay.getDate();
+                col.innerHTML = `
+                    <div class="day-header">
+                        ${dayName} <span class="date-num">${dayNum}</span>
+                    </div>
+                `;
+
+                const body = document.createElement('div');
+                body.className = 'day-body';
+
+                const dayBookings = appState.bookings.filter(b => {
+                    const bDate = new Date(b[FIELDS.BOOKING.START]);
+                    return bDate.toDateString() === currentDay.toDateString();
+                });
+
+                dayBookings.forEach(bk => {
+                    const start = new Date(bk[FIELDS.BOOKING.START]);
+                    const end = new Date(bk[FIELDS.BOOKING.END]);
+                    const timeStr = `${formatTime(start)} - ${formatTime(end)}`;
+
+                    const title = bk[FIELDS.BOOKING.TITLE] || 'No Title';
+                    const desc = bk[FIELDS.BOOKING.DESC] || 'N/A';
+                    const createdBy = bk[FIELDS.BOOKING.CREATED_BY_FORMATTED] || 'Unknown';
+                    const id = bk[FIELDS.BOOKING.ID];
+                    const listMembers = bk[FIELDS.BOOKING.LIST_MEMBERS] || 'N/A';
+                    console.log("Booking Members:", listMembers);
+                    const evt = document.createElement('div');
+                    evt.className = 'event-card';
+                    evt.title = "";
+
+
+                    evt.innerHTML = `
+                        <span class="event-time">${timeStr}</span>
+                        <span class="event-title">${title}</span>
+                        
+                        <div class="event-tooltip">
+                            <div class="tooltip-row"><span class="tooltip-label">Time</span><span class="tooltip-value">${timeStr}</span></div>
+                            <div class="tooltip-row"><span class="tooltip-label">Member</span><span class="tooltip-value">${listMembers}</span></div>
+                            <div class="tooltip-row"><span class="tooltip-label">Title</span><span class="tooltip-value">${title}</span></div>
+                            <div class="tooltip-row"><span class="tooltip-label">Description</span><span class="tooltip-value">${desc}</span></div>
+                            <div class="tooltip-row"><span class="tooltip-label">Created By</span><span class="tooltip-value">${createdBy}</span></div>
+                            <div class="tooltip-actions">
+                                <button type="button" class="btn-tool btn-tool-edit" data-id="${id}" title="Edit Booking"><i class="fa-solid fa-pen"></i></button>
+                                <button type="button" class="btn-tool btn-tool-del" data-id="${id}" title="Deactivate Booking"><i class="fa-solid fa-ban"></i></button>
+                                <button type="button" class="btn-tool btn-tool-copy" data-id="${id}" title="Copy Summary"><i class="fa-solid fa-copy"></i> Info</button>
+                                <button type="button" class="btn-tool btn-tool-message" data-id="${id}" title="Send Message"><i class="fa-solid fa-copy"></i> Message</button>
+                            </div>
+                        </div>
+                    `;
+                    body.appendChild(evt);
+                });
+
+                body.onclick = (e) => {
+                    if (e.target.closest('.event-card')) return;
+                    if (e.target.closest('.event-tooltip')) return;
+                    document.getElementById('inputDate').value = dayStr;
+                    validateTimeInputs();
+                };
+                body.style.cursor = "pointer";
+                body.title = "Click to select this date";
+
+                col.appendChild(body);
+                weekContainer.appendChild(col);
+            }
+
+            container.appendChild(weekContainer);
+        }
+
+        // --- Form Interactions ---
+
+        function toggleRecurringOptions() {
+            const isChecked = document.getElementById('inputIsRecurring').checked;
+            const optionsDiv = document.getElementById('recurringOptions');
+            if (isChecked) {
+                optionsDiv.classList.add('show');
+            } else {
+                optionsDiv.classList.remove('show');
+            }
+            validateTimeInputs();
+        }
+
+        function handleEditBooking(id) {
+            const booking = appState.bookings.find(b => b[FIELDS.BOOKING.ID] === id);
+            if (!booking) return;
+
+            appState.editingBookingId = id;
+
+            const startDate = new Date(booking[FIELDS.BOOKING.START]);
+            const endDate = new Date(booking[FIELDS.BOOKING.END]);
+
+            const y = startDate.getFullYear();
+            const m = String(startDate.getMonth() + 1).padStart(2, '0');
+            const d = String(startDate.getDate()).padStart(2, '0');
+            document.getElementById('inputDate').value = `${y}-${m}-${d}`;
+
+            const startH = startDate.getHours().toString().padStart(2, '0');
+            const startM = startDate.getMinutes().toString().padStart(2, '0');
+            document.getElementById('inputStartTime').value = `${startH}:${startM}`;
+
+            const endH = endDate.getHours().toString().padStart(2, '0');
+            const endM = endDate.getMinutes().toString().padStart(2, '0');
+            document.getElementById('inputEndTime').value = `${endH}:${endM}`;
+
+            document.getElementById('inputTitle').value = booking[FIELDS.BOOKING.TITLE] || '';
+            document.getElementById('inputDesc').value = booking[FIELDS.BOOKING.DESC] || '';
+            setSelectedUsersFromGtsTest(booking[FIELDS.BOOKING.MEMBERS]);
+
+            // Disable recurring feature when editing single item
+            document.getElementById('inputIsRecurring').checked = false;
+            document.getElementById('recurringToggleContainer').style.display = 'none';
+            toggleRecurringOptions();
+
+            document.getElementById('formTitleText').innerText = "Edit Booking";
+            const btnBook = document.getElementById('btnBook');
+            btnBook.innerText = "Update Booking";
+            btnBook.classList.add('btn-update');
+            document.getElementById('btnCancelEdit').style.display = 'inline-block';
+
+            validateTimeInputs();
+            document.querySelector('.booking-form-card').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function resetForm() {
+            appState.editingBookingId = null;
+            document.getElementById('bookingForm').reset();
+
+            const today = new Date();
+            const y = today.getFullYear();
+            const m = String(today.getMonth() + 1).padStart(2, '0');
+            const d = String(today.getDate()).padStart(2, '0');
+            document.getElementById('inputDate').value = `${y}-${m}-${d}`;
+
+            // Re-enable recurring option for new bookings
+            document.getElementById('recurringToggleContainer').style.display = 'block';
+            document.getElementById('inputIsRecurring').checked = false;
+            document.getElementById('recurringOptions').classList.remove('show');
+
+            document.getElementById('formTitleText').innerText = "New Booking";
+            const btnBook = document.getElementById('btnBook');
+            btnBook.innerText = "Book Room";
+            btnBook.classList.remove('btn-update');
+            document.getElementById('btnCancelEdit').style.display = 'none';
+            document.getElementById('formFeedback').innerText = '';
+            document.querySelectorAll(".user-checkbox").forEach(cb => cb.checked = false);
+            updateSelectedUserText();
+        }
+
+        function handleDeactivateBooking(id) {
+            if (confirm("Are you sure you want to deactivate (cancel) this booking?")) {
+                document.getElementById('globalLoading').style.display = 'flex';
+                deactivateBookingService(id).then(res => {
+                    document.getElementById('globalLoading').style.display = 'none';
+                    if (res.success) {
+                        showToast("Booking deactivated", "success");
+                        refreshCalendar();
+                        if (appState.editingBookingId === id) resetForm();
+                    } else {
+                        showToast(res.message, "error");
+                    }
+                });
+            }
+        }
+
+        function handleCopyBooking(id) {
+            const booking = appState.bookings.find(b => b[FIELDS.BOOKING.ID] === id);
+            if (!booking) return;
+
+            const start = new Date(booking[FIELDS.BOOKING.START]);
+            const end = new Date(booking[FIELDS.BOOKING.END]);
+            const dateStr = start.toLocaleDateString('vi-VN');
+            const timeStr = `${formatTime(start)} - ${formatTime(end)}`;
+            const roomName = appState.selectedRoom ? appState.selectedRoom[FIELDS.ROOM.NAME] : "Meeting Room";
+            const title = booking[FIELDS.BOOKING.TITLE] || "No Title";
+            const desc = booking[FIELDS.BOOKING.DESC] || "";
+
+            const textToCopy =
+                `📅 LỊCH HỌP / MEETING INVITATION
+📌 Chủ đề: ${title}
+🕒 Thời gian: ${timeStr} (${dateStr})
+📍 Địa điểm: ${roomName}
+📝 Nội dung: ${desc}`;
+
+            const textArea = document.createElement("textarea");
+            textArea.value = textToCopy;
+            document.body.appendChild(textArea);
+            textArea.select();
+
+            try {
+                document.execCommand('copy');
+                showToast("Copied Summary to Clipboard!", "success");
+            } catch (err) {
+                console.error('Fallback copy failed', err);
+                showToast("Failed to copy", "error");
+            }
+            document.body.removeChild(textArea);
+        }
+        async function handleSendMessageBooking(id) {
+            const booking = appState.bookings.find(b => b[FIELDS.BOOKING.ID] === id);
+            if (!booking) return;
+
+            const gtsTestValue = booking[FIELDS.BOOKING.MEMBERS];
+
+            if (!gtsTestValue) {
+                showToast("Booking này chưa có user để gửi Teams.", "warning");
+                return;
+            }
+
+            let selectedUsers = [];
+
+            try {
+                const data = typeof gtsTestValue === "string"
+                    ? JSON.parse(gtsTestValue)
+                    : gtsTestValue;
+
+                const userIds = (data.actions || []).map(a =>
+                    String(a.guid).replace(/[{}]/g, "").toLowerCase()
+                );  
+
+                selectedUsers = appState.users
+                    .filter(u => userIds.includes(String(u.systemuserid).replace(/[{}]/g, "").toLowerCase()))
+                    .map(u => ({
+                        id: u.systemuserid,
+                        name: u.fullname,
+                        email: u.internalemailaddress
+                    }));
+
+            } catch (err) {
+                console.error("Không parse được gts_test:", err);
+                showToast("Không đọc được danh sách user trong gts_test.", "error");
+                return;
+            }
+
+            if (selectedUsers.length === 0) {
+                showToast("Không tìm thấy email user để gửi Teams.", "warning");
+                return;
+            }
+
+            if (!confirm(`Gửi thông báo Teams cho ${selectedUsers.length} user?`)) return;
+
+            const startDt = new Date(booking[FIELDS.BOOKING.START]);
+            const endDt = new Date(booking[FIELDS.BOOKING.END]);
+
+            const pad = num => num.toString().padStart(2, "0");
+
+            const dateOnly = `Ngày ${pad(startDt.getDate())} tháng ${pad(startDt.getMonth() + 1)} năm ${startDt.getFullYear()}`;
+            const timeRange = `${pad(startDt.getHours())}:${pad(startDt.getMinutes())} - ${pad(endDt.getHours())}:${pad(endDt.getMinutes())}`;
+
+            document.getElementById('globalLoading').style.display = 'flex';
+
+            try {
+                await sendTeamsNotification({
+                    dateOnly: dateOnly,
+                    timeRange: timeRange,
+                    roomName: appState.selectedRoom[FIELDS.ROOM.NAME],
+                    title: booking[FIELDS.BOOKING.TITLE] || "",
+                    description: booking[FIELDS.BOOKING.DESC] || ""
+                }, selectedUsers);
+
+                showToast("Đã gửi thông báo Teams!", "success");
+            } catch (err) {
+                console.error(err);
+                showToast("Lỗi khi gửi thông báo Teams.", "error");
+            }
+
+            document.getElementById('globalLoading').style.display = 'none';
+        }
+        // --- Validation & Submission ---
+
+        function validateTimeInputs() {
+            const d = document.getElementById('inputDate').value;
+            const s = document.getElementById('inputStartTime').value;
+            const e = document.getElementById('inputEndTime').value;
+            const isRecurring = document.getElementById('inputIsRecurring').checked;
+            const recEndDateStr = document.getElementById('inputRecurrenceEndDate').value;
+            const fb = document.getElementById('formFeedback');
+            const btn = document.getElementById('btnBook');
+
+            fb.innerText = '';
+            btn.disabled = false;
+
+            if (!appState.selectedRoom) { btn.disabled = true; return; }
+            if (!d || !s || !e) { btn.disabled = true; return; }
+
+            const startDt = new Date(`${d}T${s}`);
+            const endDt = new Date(`${d}T${e}`);
+
+            if (endDt <= startDt) {
+                fb.innerText = "Giờ kết thúc phải sau Giờ bắt đầu.";
+                btn.disabled = true;
+                return;
+            }
+
+            if (isRecurring) {
+                if (!recEndDateStr) {
+                    fb.innerText = "Vui lòng chọn ngày kết thúc cho chuỗi lặp lại.";
+                    btn.disabled = true;
+                    return;
+                }
+                const recEndDt = new Date(`${recEndDateStr}T23:59:59`);
+                if (recEndDt < startDt) {
+                    fb.innerText = "Ngày kết thúc lặp lại phải sau Ngày bắt đầu.";
+                    btn.disabled = true;
+                    return;
+                }
+            } else {
+                // Single booking conflict check (only checks currently loaded 14-day view)
+                const conflict = appState.bookings.some(bk => {
+                    if (appState.editingBookingId && bk[FIELDS.BOOKING.ID] === appState.editingBookingId) return false;
+                    const bStart = new Date(bk[FIELDS.BOOKING.START]);
+                    const bEnd = new Date(bk[FIELDS.BOOKING.END]);
+                    if (bStart.toDateString() !== startDt.toDateString()) return false;
+                    return (startDt < bEnd && endDt > bStart);
+                });
+
+                if (conflict) {
+                    fb.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> Trùng lịch trong khoảng thời gian này.';
+                    btn.disabled = true;
+                }
+            }
+        }
+
+        async function handleFormSubmit(e) {
+            e.preventDefault();
+
+            const d = document.getElementById('inputDate').value;
+            const s = document.getElementById('inputStartTime').value;
+            const eTime = document.getElementById('inputEndTime').value;
+            const isRecurring = document.getElementById('inputIsRecurring').checked;
+
+            const startDt = new Date(`${d}T${s}`);
+            const endDt = new Date(`${d}T${eTime}`);
+
+            const selectedCheckboxes = Array.from(document.querySelectorAll(".user-checkbox:checked"));
+
+            const selectedUsers = selectedCheckboxes.map(cb => ({
+                id: cb.value,
+                name: cb.getAttribute("data-name"),
+                email: cb.getAttribute("data-email")
+            }));
+
+            const payload = {};
+            payload[FIELDS.BOOKING.TITLE] = document.getElementById('inputTitle').value;
+            payload[FIELDS.BOOKING.DESC] = document.getElementById('inputDesc').value;
+
+            // Lưu danh sách user vào Dataverse
+            payload[FIELDS.BOOKING.MEMBERS] = JSON.stringify({
+                actions: selectedUsers.map(u => ({
+                    associate: true,
+                    guid: u.id
+                })),
+                len: "systemuser",
+                ida: "systemuserid",
+                na: "fullname",
+                re: "gts_booking_systemuser",
+                rn: "gts_Booking_SystemUser_SystemUser"
+            });
+
+            if (isRecurring && !appState.editingBookingId) {
+                await handleRecurringSubmit(payload, startDt, endDt);
+            } else {
+                payload[FIELDS.BOOKING.START] = startDt.toISOString();
+                payload[FIELDS.BOOKING.END] = endDt.toISOString();
+
+                document.getElementById('globalLoading').style.display = 'flex';
+
+                let res;
+
+                if (appState.editingBookingId) {
+                    res = await updateBookingService(appState.editingBookingId, payload);
+                } else {
+                    payload[FIELDS.BOOKING.ROOM_BIND] = `/gts_rooms(${appState.selectedRoom[FIELDS.ROOM.ID]})`;
+                    res = await createBookingService(payload);
+                    if (res.success && selectedUsers.length > 0) {
+                        await associateBookingUsers(res.id, selectedUsers);
+                    }
+                }
+
+                if (res.success) {
+                    // Nếu có chọn user thì hỏi có gửi Teams không
+                    if (!appState.editingBookingId && selectedUsers.length > 0) {
+                        const confirmSend = confirm("Bạn có muốn thông báo cho user qua Teams không?");
+
+                        if (confirmSend) {
+                            const pad = num => num.toString().padStart(2, "0");
+
+                            const dateOnly = `Ngày ${pad(startDt.getDate())} tháng ${pad(startDt.getMonth() + 1)} năm ${startDt.getFullYear()}`;
+                            const timeRange = `${pad(startDt.getHours())}:${pad(startDt.getMinutes())} - ${pad(endDt.getHours())}:${pad(endDt.getMinutes())}`;
+
+                            await sendTeamsNotification({
+                                dateOnly: dateOnly,
+                                timeRange: timeRange,
+                                roomName: appState.selectedRoom[FIELDS.ROOM.NAME],
+                                title: payload[FIELDS.BOOKING.TITLE],
+                                description: payload[FIELDS.BOOKING.DESC]
+                            }, selectedUsers);
+
+                            showToast("Đã lưu booking và gửi thông báo Teams!", "success");
+                        } else {
+                            showToast("Đã lưu booking vào Dataverse, không gửi Teams.", "success");
+                        }
+                    } else {
+                        showToast(appState.editingBookingId ? "Updated successfully!" : "Created successfully!", "success");
+                    }
+
+                    resetForm();
+                    refreshCalendar();
+                } else {
+                    showToast(res.message, "error");
+                }
+
+                document.getElementById('globalLoading').style.display = 'none';
+            }
+        }
+
+        // --- Recurring Logic ---
+        async function handleRecurringSubmit(basePayload, startDt, endDt) {
+            const recType = document.getElementById('inputRecurrenceType').value;
+            const recEndStr = document.getElementById('inputRecurrenceEndDate').value;
+            const skipWeekends = document.getElementById('inputSkipWeekends').checked;
+            const recEndDt = new Date(`${recEndStr}T23:59:59`);
+
+
+            const occurrences = [];
+            let currStart = new Date(startDt);
+            let currEnd = new Date(endDt);
+
+            while (currStart <= recEndDt) {
+                let isWeekend = currStart.getDay() === 0 || currStart.getDay() === 6; // 0 = Sunday, 6 = Saturday
+
+                if (!(skipWeekends && isWeekend)) {
+                    occurrences.push({ start: new Date(currStart), end: new Date(currEnd) });
+                }
+
+                if (recType === 'daily') {
+                    currStart.setDate(currStart.getDate() + 1);
+                    currEnd.setDate(currEnd.getDate() + 1);
+                } else if (recType === 'weekly') {
+                    currStart.setDate(currStart.getDate() + 7);
+                    currEnd.setDate(currEnd.getDate() + 7);
+                } else if (recType === 'monthly') {
+                    currStart.setMonth(currStart.getMonth() + 1);
+                    currEnd.setMonth(currEnd.getMonth() + 1);
+                }
+            }
+
+            if (occurrences.length === 0) {
+                showToast("Không có ngày nào hợp lệ để đặt.", "warning");
+                return;
+            }
+
+            if (occurrences.length > 50) {
+                if (!confirm(`Bạn đang chuẩn bị tạo ${occurrences.length} lịch họp. Điều này có thể mất một chút thời gian. Có tiếp tục không?`)) return;
+            }
+
+            document.getElementById('globalLoading').style.display = 'flex';
+
+            // 2. Fetch bookings to check conflicts
+            // Fetch everything from the start date to the recurrence end date
+            const existingBookings = await fetchBookingsRangeService(appState.selectedRoom[FIELDS.ROOM.ID], startDt, recEndDt);
+
+            // 3. Detect Conflicts
+            const conflicts = [];
+            const validOccurrences = [];
+
+            occurrences.forEach(occ => {
+                const hasConflict = existingBookings.some(bk => {
+                    const bStart = new Date(bk[FIELDS.BOOKING.START]);
+                    const bEnd = new Date(bk[FIELDS.BOOKING.END]);
+                    // Check if overlaps
+                    return (occ.start < bEnd && occ.end > bStart);
+                });
+
+                if (hasConflict) {
+                    conflicts.push(occ);
+                } else {
+                    validOccurrences.push(occ);
+                }
+            });
+
+            document.getElementById('globalLoading').style.display = 'none';
+
+            if (conflicts.length > 0) {
+                const conflictDates = conflicts.slice(0, 5).map(c => c.start.toLocaleDateString('vi-VN')).join(', ');
+                let msg = `Cảnh báo: Có ${conflicts.length} ngày bị trùng lịch với người khác (VD: ${conflictDates}...).`;
+                if (validOccurrences.length > 0) {
+                    msg += `\n\nBạn có muốn tự động BỎ QUA các ngày trùng lặp và tiến hành tạo cho ${validOccurrences.length} ngày còn lại không?`;
+                    if (!confirm(msg)) return;
+                } else {
+                    alert(`${msg}\nKhông còn ngày nào hợp lệ để tạo lịch.`);
+                    return;
+                }
+            }
+
+            document.getElementById('globalLoading').style.display = 'flex';
+
+            // 4. Create Bookings Seqentialy (to avoid API rate limits)
+            let successCount = 0;
+            let failCount = 0;
+
+            for (const occ of validOccurrences) {
+                const payload = { ...basePayload };
+                payload[FIELDS.BOOKING.START] = occ.start.toISOString();
+                payload[FIELDS.BOOKING.END] = occ.end.toISOString();
+                payload[FIELDS.BOOKING.ROOM_BIND] = `/gts_rooms(${appState.selectedRoom[FIELDS.ROOM.ID]})`;
+
+                const res = await createBookingService(payload);
+                if (res.success) successCount++;
+                else failCount++;
+            }
+
+            document.getElementById('globalLoading').style.display = 'none';
+
+            if (successCount > 0) {
+                showToast(`Đã tạo thành công ${successCount} lịch họp Seri. ${failCount > 0 ? `(Lỗi: ${failCount})` : ''}`, "success");
+                resetForm();
+                refreshCalendar();
+            } else {
+                showToast("Lỗi khi tạo lịch Seri.", "error");
+            }
+        }
+
+        // --- Utils ---
+        function formatTime(d) {
+            return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
+        }
+        function showToast(msg, type) {
+            const t = document.getElementById('toast');
+            t.innerText = msg; t.className = `toast ${type} show`;
+            setTimeout(() => t.classList.remove('show'), 4000);
+        }
+        function showLoading(show, id) {
+            const el = document.querySelector(`#${id} .loading-overlay`);
+            if (el) el.style.display = show ? 'flex' : 'none';
+        }
+
+        document.addEventListener('DOMContentLoaded', initApp);
+    </script>
+</body>
+
+</html>
