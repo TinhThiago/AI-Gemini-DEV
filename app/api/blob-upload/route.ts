@@ -5,10 +5,7 @@ export async function POST(request: Request) {
     try {
         if (!process.env.BLOB_READ_WRITE_TOKEN) {
             return NextResponse.json(
-                {
-                    ok: false,
-                    error: "Missing BLOB_READ_WRITE_TOKEN",
-                },
+                { ok: false, error: "Missing BLOB_READ_WRITE_TOKEN" },
                 { status: 500 }
             );
         }
@@ -18,34 +15,22 @@ export async function POST(request: Request) {
         const jsonResponse = await handleUpload({
             body,
             request,
-            onBeforeGenerateToken: async (pathname, clientPayload) => {
-                console.log("Blob token request:", {
-                    pathname,
-                    clientPayload,
-                });
-
+            onBeforeGenerateToken: async (pathname) => {
                 return {
                     maximumSizeInBytes: 500 * 1024 * 1024,
-                    tokenPayload: JSON.stringify({
-                        type: "source-zip",
-                        pathname,
-                    }),
+                    tokenPayload: JSON.stringify({ pathname }),
                 };
             },
-            onUploadCompleted: async ({ blob, tokenPayload }) => {
-                console.log("Blob upload completed:", blob.url, tokenPayload);
+            onUploadCompleted: async ({ blob }) => {
+                console.log("Blob upload completed:", blob.url);
             },
         });
 
         return NextResponse.json(jsonResponse);
     } catch (error: any) {
         console.error("blob-upload error:", error);
-
         return NextResponse.json(
-            {
-                ok: false,
-                error: error?.message || "Blob upload failed",
-            },
+            { ok: false, error: error?.message || "Blob upload failed" },
             { status: 400 }
         );
     }

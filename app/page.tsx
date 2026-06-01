@@ -102,10 +102,8 @@ export default function HomePage() {
                     size: file.size,
                     type: file.type || "unknown",
                 }),
-                onUploadProgress: ({ loaded, total, percentage }) => {
-                    setLoading(
-                        `Đang upload file lớn lên Vercel Blob... ${percentage.toFixed(0)}%`
-                    );
+                onUploadProgress: ({ percentage }) => {
+                    setLoading(`Đang upload file lớn lên Vercel Blob... ${percentage.toFixed(0)}%`);
                 },
             });
 
