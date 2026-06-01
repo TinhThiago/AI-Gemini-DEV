@@ -13,41 +13,14 @@ export default function HomePage() {
     const [result, setResult] = useState<any>(null);
     const [loading, setLoading] = useState("");
     const [diffs, setDiffs] = useState<any[]>([]);
-    const [testCommand, setTestCommand] = useState("");
-    const [testResult, setTestResult] = useState<any>(null);
-    async function runTests() {
-        if (!projectId) {
-            alert("Upload project trước");
-            return;
-        }
 
+    async function copyToClipboard(text: string) {
         try {
-            setLoading("Đang chạy tests...");
-            setTestResult(null);
-
-            const res = await fetch("/api/run-tests", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                    projectId,
-                    command: testCommand,
-                }),
-            });
-
-            const data = await res.json();
-
-            if (!data.ok) {
-                alert(data.error || "Chạy test thất bại");
-                return;
-            }
-
-            setTestResult(data.result);
-        } catch (err: any) {
-            alert(err.message || "Lỗi khi chạy tests");
-        } finally {
-            setLoading("");
+            await navigator.clipboard.writeText(text);
+            alert("Đã copy code");
+        } catch (err) {
+            console.error(err);
+            alert("Không copy được code");
         }
     }
     async function loadDiff() {
@@ -342,11 +315,26 @@ export default function HomePage() {
                                 <h3 className="font-semibold text-yellow-400">Files sẽ sửa</h3>
                                 <div className="space-y-3 mt-2">
                                     {result.changes.map((change: any, i: number) => (
-                                        <details key={i} className="bg-black rounded-lg p-3">
-                                            <summary className="cursor-pointer">
-                                                {change.file} — {change.reason}
+                                        <details key={i} className="bg-black rounded-lg border border-neutral-800 overflow-hidden">
+                                            <summary className="cursor-pointer p-3 flex items-start justify-between gap-4">
+                                                <span>
+                                                    {change.file} — {change.reason}
+                                                </span>
+
+                                                <button
+                                                    type="button"
+                                                    onClick={(e) => {
+                                                        e.preventDefault();
+                                                        e.stopPropagation();
+                                                        copyToClipboard(change.content || "");
+                                                    }}
+                                                    className="shrink-0 px-3 py-1 rounded border border-red-500 text-red-400 hover:bg-red-500 hover:text-white"
+                                                >
+                                                    Copy
+                                                </button>
                                             </summary>
-                                            <pre className="mt-3 overflow-auto text-xs text-neutral-300">
+
+                                            <pre className="p-3 overflow-auto text-xs text-neutral-300 max-h-[520px] border-t border-neutral-800">
                                                 {change.content}
                                             </pre>
                                         </details>
@@ -381,45 +369,7 @@ export default function HomePage() {
                                 </pre>
                             </div>
                         )}
-                        <div className="bg-black rounded-lg p-4 space-y-3">
-                            <h3 className="font-semibold text-green-400">Run Tests</h3>
-
-                            <input
-                                value={testCommand}
-                                onChange={(e) => setTestCommand(e.target.value)}
-                                placeholder="Để trống để auto detect, hoặc nhập: npm test / npx vitest run / npx jest"
-                                className="w-full bg-neutral-900 border border-neutral-700 rounded-lg p-3 text-sm"
-                            />
-
-                            <button
-                                onClick={runTests}
-                                className="px-5 py-2 rounded-lg bg-green-700 hover:bg-green-600"
-                            >
-                                Run Tests
-                            </button>
-                        </div>
-                        {testResult && (
-                            <div className="bg-black rounded-lg border border-neutral-800 overflow-hidden">
-                                <div className="px-4 py-2 bg-neutral-900 border-b border-neutral-800">
-                                    <div className="font-semibold">
-                                        Test Result:{" "}
-                                        {testResult.code === 0 ? (
-                                            <span className="text-green-400">PASSED</span>
-                                        ) : (
-                                            <span className="text-red-400">FAILED</span>
-                                        )}
-                                    </div>
-                                    <div className="text-sm text-neutral-400">
-                                        Command: {testResult.command}
-                                    </div>
-                                </div>
-
-                                <pre className="p-4 overflow-auto text-xs text-neutral-300 max-h-96">
-                                    {testResult.stdout || ""}
-                                    {testResult.stderr ? "\n\nSTDERR:\n" + testResult.stderr : ""}
-                                </pre>
-                            </div>
-                        )}
+                        
                         <div className="flex gap-3 flex-wrap">
                             <button
                                 onClick={loadDiff}
@@ -434,12 +384,7 @@ export default function HomePage() {
                             >
                                 Apply Changes + Tests
                             </button>
-                            <button
-                                onClick={runTests}
-                                className="px-5 py-2 rounded-lg bg-blue-700 hover:bg-blue-600"
-                            >
-                                Run Tests
-                            </button>
+                            
                             <button
                                 onClick={downloadZip}
                                 className="px-5 py-2 rounded-lg bg-neutral-700 hover:bg-neutral-600"
