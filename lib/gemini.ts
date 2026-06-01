@@ -3,8 +3,14 @@ import fs from "fs";
 import path from "path";
 import { jsonrepair } from "jsonrepair";
 
+const apiKey = process.env.GEMINI_API_KEY;
+
+if (!apiKey) {
+  throw new Error("Missing GEMINI_API_KEY environment variable");
+}
+
 export const gemini = new GoogleGenAI({
-  apiKey: process.env.GEMINI_API_KEY,
+  apiKey,
 });
 
 const GEMINI_MODELS = [
