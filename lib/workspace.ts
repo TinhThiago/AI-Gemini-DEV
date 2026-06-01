@@ -4,14 +4,11 @@ import AdmZip from "adm-zip";
 import { v4 as uuidv4 } from "uuid";
 
 export function getWorkspaceRoot() {
-  const root = process.env.WORKSPACE_ROOT || "./workspaces";
-  const full = path.resolve(process.cwd(), root);
-
-  if (!fs.existsSync(full)) {
-    fs.mkdirSync(full, { recursive: true });
+  if (process.env.VERCEL) {
+    return path.join("/tmp", "workspaces");
   }
 
-  return full;
+  return path.join(process.cwd(), "workspaces");
 }
 
 export function createWorkspace() {
