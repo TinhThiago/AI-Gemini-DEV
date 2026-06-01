@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { upload } from "@vercel/blob/client";
 
 export default function HomePage() {
     const [file, setFile] = useState<File | null>(null);
@@ -88,17 +89,29 @@ export default function HomePage() {
         }
 
         try {
-            setLoading("Đang upload và giải nén...");
+            setLoading("Đang upload file lớn lên Vercel Blob...");
             setProjectId("");
             setFiles([]);
             setResult(null);
 
-            const formData = new FormData();
-            formData.append("file", file);
+            const blob = await upload(file.name, file, {
+                access: "public",
+                handleUploadUrl: "/api/blob-upload",
+            });
 
-            const res = await fetch("/api/upload", {
+            console.log("Blob uploaded:", blob);
+
+            setLoading("Đã upload Blob, đang giải nén source...");
+
+            const res = await fetch("/api/upload-from-url", {
                 method: "POST",
-                body: formData,
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    url: blob.url,
+                    filename: file.name,
+                }),
             });
 
             const text = await res.text();
@@ -108,13 +121,13 @@ export default function HomePage() {
             try {
                 data = JSON.parse(text);
             } catch {
-                console.error("Upload API raw response:", text);
-                alert("API upload không trả JSON. Xem Terminal hoặc Console để biết lỗi.");
+                console.error("Upload from URL raw response:", text);
+                alert("API upload-from-url không trả JSON. Xem Console/Vercel Logs.");
                 setLoading("");
                 return;
             }
 
-            console.log("Upload response:", data);
+            console.log("Upload from URL response:", data);
 
             if (!res.ok || !data.ok) {
                 alert(data.error || "Upload thất bại");
