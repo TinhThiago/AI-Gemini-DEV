@@ -97,7 +97,6 @@ export default function HomePage() {
             const blob = await upload(file.name, file, {
                 access: "public",
                 handleUploadUrl: "/api/blob-upload",
-                multipart: true,
                 clientPayload: JSON.stringify({
                     filename: file.name,
                     size: file.size,
