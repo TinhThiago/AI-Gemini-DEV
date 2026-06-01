@@ -13,15 +13,32 @@ export default function HomePage() {
     const [result, setResult] = useState<any>(null);
     const [loading, setLoading] = useState("");
     const [diffs, setDiffs] = useState<any[]>([]);
+    const [copiedKey, setCopiedKey] = useState("");
 
-    async function copyToClipboard(text: string) {
+    async function copyToClipboard(text: string, key: string) {
         try {
-            await navigator.clipboard.writeText(text);
-            alert("Đã copy code");
+            await navigator.clipboard.writeText(text || "");
+            setCopiedKey(key);
         } catch (err) {
             console.error(err);
             alert("Không copy được code");
         }
+    }
+    function buildDiffText(diff: any) {
+        return (diff.parts || [])
+            .map((part: any) => {
+                const prefix = part.added ? "+ " : part.removed ? "- " : "  ";
+
+                return String(part.value || "")
+                    .split("\n")
+                    .map((line: string, lineIndex: number, arr: string[]) =>
+                        line === "" && lineIndex === arr.length - 1
+                            ? ""
+                            : `${prefix}${line}`
+                    )
+                    .join("\n");
+            })
+            .join("");
     }
     async function loadDiff() {
         if (!projectId || !result) return;
@@ -330,11 +347,14 @@ export default function HomePage() {
                                                     onClick={(e) => {
                                                         e.preventDefault();
                                                         e.stopPropagation();
-                                                        copyToClipboard(change.content || "");
+                                                        copyToClipboard(change.content || "", `change-${i}`);
                                                     }}
-                                                    className="shrink-0 px-3 py-1 rounded border border-red-500 text-red-400 hover:bg-red-500 hover:text-white"
+                                                    className={`shrink-0 px-3 py-1 rounded border ${copiedKey === `change-${i}`
+                                                        ? "border-green-500 text-green-400"
+                                                        : "border-red-500 text-red-400 hover:bg-red-500 hover:text-white"
+                                                        }`}
                                                 >
-                                                    Copy
+                                                    {copiedKey === `change-${i}` ? "✓" : "Copy"}
                                                 </button>
                                             </summary>
 
@@ -420,8 +440,19 @@ export default function HomePage() {
 
                                 {diffs.map((diff: any, index: number) => (
                                     <div key={index} className="bg-black rounded-lg border border-neutral-800 overflow-hidden">
-                                        <div className="px-4 py-2 bg-neutral-900 border-b border-neutral-800 font-semibold text-sm">
-                                            {diff.file}
+                                        <div className="px-4 py-2 bg-neutral-900 border-b border-neutral-800 font-semibold text-sm flex items-center justify-between gap-4">
+                                            <span>{diff.file}</span>
+
+                                            <button
+                                                type="button"
+                                                onClick={() => copyToClipboard(buildDiffText(diff), `diff-${index}`)}
+                                                className={`shrink-0 px-3 py-1 rounded border ${copiedKey === `diff-${index}`
+                                                        ? "border-green-500 text-green-400"
+                                                        : "border-red-500 text-red-400 hover:bg-red-500 hover:text-white"
+                                                    }`}
+                                            >
+                                                {copiedKey === `diff-${index}` ? "✓" : "Copy"}
+                                            </button>
                                         </div>
 
                                         <pre className="p-4 overflow-auto text-xs leading-5 max-h-[520px] whitespace-pre">
