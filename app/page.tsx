@@ -27,19 +27,10 @@ export default function HomePage() {
 
     function buildDiffText(diff: any) {
         return (diff.parts || [])
-            .map((part: any) => {
-                const prefix = part.added ? "+ " : part.removed ? "- " : "  ";
-
-                return String(part.value || "")
-                    .split("\n")
-                    .map((line: string, lineIndex: number, arr: string[]) =>
-                        line === "" && lineIndex === arr.length - 1
-                            ? ""
-                            : `${prefix}${line}`
-                    )
-                    .join("\n");
-            })
-            .join("");
+            .filter((part: any) => part.added)
+            .map((part: any) => String(part.value || ""))
+            .join("")
+            .trim();
     }
 
     function CopyButton({ copyKey, text }: { copyKey: string; text: string }) {
@@ -53,11 +44,10 @@ export default function HomePage() {
                     e.stopPropagation();
                     copyToClipboard(text || "", copyKey);
                 }}
-                className={`shrink-0 px-3 py-1 rounded border text-sm ${
-                    copied
-                        ? "border-green-500 text-green-400"
-                        : "border-red-500 text-red-400 hover:bg-red-500 hover:text-white"
-                }`}
+                className={`shrink-0 px-3 py-1 rounded border text-sm ${copied
+                    ? "border-green-500 text-green-400"
+                    : "border-red-500 text-red-400 hover:bg-red-500 hover:text-white"
+                    }`}
             >
                 {copied ? "✓" : "Copy"}
             </button>
