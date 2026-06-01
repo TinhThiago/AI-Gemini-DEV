@@ -37,7 +37,7 @@ export default function HomePage() {
                 body: JSON.stringify({
                     projectId,
                     changes: result.changes || [],
-                    tests: result.tests || [],
+                    tests: [],
                 }),
             });
 
@@ -352,11 +352,29 @@ export default function HomePage() {
                                 <h3 className="font-semibold text-cyan-400">Unit Test / Testcase đề xuất</h3>
                                 <div className="space-y-3 mt-2">
                                     {result.tests.map((test: any, i: number) => (
-                                        <details key={i} className="bg-black rounded-lg p-3">
-                                            <summary className="cursor-pointer">
-                                                {test.file} — {test.type} — {test.description}
+                                        <details
+                                            key={i}
+                                            className="bg-black rounded-lg border border-neutral-800 overflow-hidden"
+                                        >
+                                            <summary className="cursor-pointer p-3 flex items-start justify-between gap-4">
+                                                <span>
+                                                    {test.file} — {test.type} — {test.description}
+                                                </span>
+
+                                                <button
+                                                    type="button"
+                                                    onClick={(e) => {
+                                                        e.preventDefault();
+                                                        e.stopPropagation();
+                                                        copyToClipboard(test.content || "");
+                                                    }}
+                                                    className="shrink-0 px-3 py-1 rounded border border-red-500 text-red-400 hover:bg-red-500 hover:text-white"
+                                                >
+                                                    Copy
+                                                </button>
                                             </summary>
-                                            <pre className="mt-3 overflow-auto text-xs text-neutral-300">
+
+                                            <pre className="p-3 overflow-auto text-xs text-neutral-300 max-h-[360px] border-t border-neutral-800 whitespace-pre">
                                                 {test.content}
                                             </pre>
                                         </details>
@@ -386,7 +404,7 @@ export default function HomePage() {
                                 onClick={applyChanges}
                                 className="px-5 py-2 rounded-lg bg-green-600 hover:bg-green-500"
                             >
-                                Apply Changes + Tests
+                                Apply Changes
                             </button>
 
                             <button
@@ -406,7 +424,7 @@ export default function HomePage() {
                                             {diff.file}
                                         </div>
 
-                                        <pre className="p-4 overflow-auto text-xs leading-5">
+                                        <pre className="p-4 overflow-auto text-xs leading-5 max-h-[520px] whitespace-pre">
                                             {diff.parts.map((part: any, i: number) => {
                                                 const prefix = part.added ? "+ " : part.removed ? "- " : "  ";
 
