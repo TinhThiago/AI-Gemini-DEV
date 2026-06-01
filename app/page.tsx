@@ -97,6 +97,11 @@ export default function HomePage() {
             const blob = await upload(file.name, file, {
                 access: "public",
                 handleUploadUrl: "/api/blob-upload",
+                multipart: true,
+                onUploadProgress: ({ loaded, total, percentage }) => {
+                    console.log(`Upload progress: ${percentage}%`, loaded, total);
+                    setLoading(`Đang upload file lớn lên Vercel Blob... ${percentage.toFixed(0)}%`);
+                },
             });
 
             console.log("Blob uploaded:", blob);

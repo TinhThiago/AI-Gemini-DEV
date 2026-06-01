@@ -7,7 +7,7 @@ export async function POST(request: Request) {
             return NextResponse.json(
                 {
                     ok: false,
-                    error: "Missing BLOB_READ_WRITE_TOKEN. Hãy tạo/connect Vercel Blob Storage với project này rồi Redeploy.",
+                    error: "Missing BLOB_READ_WRITE_TOKEN",
                 },
                 { status: 500 }
             );
@@ -25,12 +25,13 @@ export async function POST(request: Request) {
                         "application/x-zip-compressed",
                         "application/octet-stream",
                     ],
+                    maximumSizeInBytes: 500 * 1024 * 1024,
                     addRandomSuffix: true,
                     tokenPayload: JSON.stringify({ type: "source-zip" }),
                 };
             },
-            onUploadCompleted: async ({ blob }) => {
-                console.log("Blob upload completed:", blob.url);
+            onUploadCompleted: async ({ blob, tokenPayload }) => {
+                console.log("Blob upload completed:", blob.url, tokenPayload);
             },
         });
 
