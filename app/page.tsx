@@ -67,11 +67,15 @@ export default function HomePage() {
             setFiles([]);
             setResult(null);
 
-            const blob = await upload(file.name, file, {
+            const safeFileName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+            const uniqueFileName = `${Date.now()}-${safeFileName}`;
+
+            const blob = await upload(uniqueFileName, file, {
                 access: "public",
                 handleUploadUrl: "/api/blob-upload",
                 clientPayload: JSON.stringify({
-                    filename: file.name,
+                    originalFilename: file.name,
+                    uploadFilename: uniqueFileName,
                     size: file.size,
                     type: file.type || "unknown",
                 }),
@@ -369,7 +373,7 @@ export default function HomePage() {
                                 </pre>
                             </div>
                         )}
-                        
+
                         <div className="flex gap-3 flex-wrap">
                             <button
                                 onClick={loadDiff}
@@ -384,7 +388,7 @@ export default function HomePage() {
                             >
                                 Apply Changes + Tests
                             </button>
-                            
+
                             <button
                                 onClick={downloadZip}
                                 className="px-5 py-2 rounded-lg bg-neutral-700 hover:bg-neutral-600"
