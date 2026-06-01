@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@google/genai": "^1.0.0",
+    "@tailwindcss/postcss": "^4.3.0",
     "adm-zip": "^0.5.17",
     "diff": "^9.0.0",
     "dotenv": "^17.4.2",
@@ -23,7 +24,6 @@
     "uuid": "^14.0.0"
   },
   "devDependencies": {
-    "@tailwindcss/postcss": "^4",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
     "@testing-library/user-event": "^14.6.1",
@@ -35,7 +35,7 @@
     "eslint-config-next": "16.2.6",
     "jest": "^30.4.2",
     "jsdom": "^29.1.1",
-    "tailwindcss": "^4",
+    "tailwindcss": "^4.3.0",
     "typescript": "^5",
     "vitest": "^4.1.7"
   }
