@@ -24,6 +24,7 @@ export default function HomePage() {
             alert("Không copy được code");
         }
     }
+
     function buildDiffText(diff: any) {
         return (diff.parts || [])
             .map((part: any) => {
@@ -40,6 +41,29 @@ export default function HomePage() {
             })
             .join("");
     }
+
+    function CopyButton({ copyKey, text }: { copyKey: string; text: string }) {
+        const copied = copiedKey === copyKey;
+
+        return (
+            <button
+                type="button"
+                onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    copyToClipboard(text || "", copyKey);
+                }}
+                className={`shrink-0 px-3 py-1 rounded border text-sm ${
+                    copied
+                        ? "border-green-500 text-green-400"
+                        : "border-red-500 text-red-400 hover:bg-red-500 hover:text-white"
+                }`}
+            >
+                {copied ? "✓" : "Copy"}
+            </button>
+        );
+    }
+
     async function loadDiff() {
         if (!projectId || !result) return;
 
@@ -72,6 +96,7 @@ export default function HomePage() {
             setLoading("");
         }
     }
+
     async function uploadZip() {
         if (!file) {
             alert("Chọn file .zip trước");
@@ -83,6 +108,8 @@ export default function HomePage() {
             setProjectId("");
             setFiles([]);
             setResult(null);
+            setDiffs([]);
+            setCopiedKey("");
 
             const safeFileName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
             const uniqueFileName = `${Date.now()}-${safeFileName}`;
@@ -97,11 +124,11 @@ export default function HomePage() {
                     type: file.type || "unknown",
                 }),
                 onUploadProgress: ({ percentage }) => {
-                    setLoading(`Đang upload file lớn lên Vercel Blob... ${percentage.toFixed(0)}%`);
+                    setLoading(
+                        `Đang upload file lớn lên Vercel Blob... ${percentage.toFixed(0)}%`
+                    );
                 },
             });
-
-            console.log("Blob uploaded:", blob);
 
             setLoading("Đã upload Blob, đang giải nén source...");
 
@@ -117,7 +144,6 @@ export default function HomePage() {
             });
 
             const text = await res.text();
-
             let data: any;
 
             try {
@@ -125,22 +151,16 @@ export default function HomePage() {
             } catch {
                 console.error("Upload from URL raw response:", text);
                 alert("API upload-from-url không trả JSON. Xem Console/Vercel Logs.");
-                setLoading("");
                 return;
             }
 
-            console.log("Upload from URL response:", data);
-
             if (!res.ok || !data.ok) {
                 alert(data.error || "Upload thất bại");
-                setLoading("");
                 return;
             }
 
             setProjectId(data.projectId);
             setFiles(data.files || []);
-
-            alert("Upload thành công");
         } catch (err: any) {
             console.error(err);
             alert(err.message || "Upload lỗi");
@@ -158,6 +178,8 @@ export default function HomePage() {
         try {
             setLoading("Gemini đang review code...");
             setResult(null);
+            setDiffs([]);
+            setCopiedKey("");
 
             const res = await fetch("/api/agent", {
                 method: "POST",
@@ -175,7 +197,6 @@ export default function HomePage() {
             }
 
             setResult(data.result);
-            setDiffs([]);
         } catch (err: any) {
             console.error(err);
             alert(err.message || "Có lỗi khi gọi Gemini Agent");
@@ -189,28 +210,32 @@ export default function HomePage() {
 
         setLoading("Đang ghi file...");
 
-        const res = await fetch("/api/apply", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-                projectId,
-                changes: result.changes || [],
-                tests: result.tests || [],
-            }),
-        });
+        try {
+            const res = await fetch("/api/apply", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    projectId,
+                    changes: result.changes || [],
+                    tests: [],
+                }),
+            });
 
-        const data = await res.json();
+            const data = await res.json();
 
-        setLoading("");
+            if (!data.ok) {
+                alert(data.error || "Apply thất bại");
+                return;
+            }
 
-        if (!data.ok) {
-            alert(data.error);
-            return;
+            alert(data.message || "Đã apply changes");
+        } catch (err: any) {
+            alert(err.message || "Lỗi apply changes");
+        } finally {
+            setLoading("");
         }
-
-        alert(data.message);
     }
 
     function downloadZip() {
@@ -218,13 +243,24 @@ export default function HomePage() {
         window.location.href = `/api/download?projectId=${projectId}`;
     }
 
+    const filteredDiffs = diffs.filter((diff: any) => {
+        const fileName = String(diff.file || "").toLowerCase();
+
+        return (
+            !fileName.includes("__tests__") &&
+            !fileName.includes(".test.") &&
+            !fileName.includes(".spec.") &&
+            !fileName.includes("testcase")
+        );
+    });
+
     return (
         <main className="min-h-screen bg-neutral-950 text-white p-6">
             <div className="max-w-7xl mx-auto space-y-6">
                 <header>
                     <h1 className="text-3xl font-bold">Gemini Senior Agent</h1>
                     <p className="text-neutral-400 mt-2">
-                        Upload source ZIP → Gemini review/sửa code/tạo unit test → Apply → Download ZIP.
+                        Upload source ZIP → Gemini review/sửa code → Apply → Download ZIP.
                     </p>
                 </header>
 
@@ -336,29 +372,22 @@ export default function HomePage() {
                                 <h3 className="font-semibold text-yellow-400">Files sẽ sửa</h3>
                                 <div className="space-y-3 mt-2">
                                     {result.changes.map((change: any, i: number) => (
-                                        <details key={i} className="bg-black rounded-lg border border-neutral-800 overflow-hidden">
+                                        <details
+                                            key={i}
+                                            className="bg-black rounded-lg border border-neutral-800 overflow-hidden"
+                                        >
                                             <summary className="cursor-pointer p-3 flex items-start justify-between gap-4">
                                                 <span>
                                                     {change.file} — {change.reason}
                                                 </span>
 
-                                                <button
-                                                    type="button"
-                                                    onClick={(e) => {
-                                                        e.preventDefault();
-                                                        e.stopPropagation();
-                                                        copyToClipboard(change.content || "", `change-${i}`);
-                                                    }}
-                                                    className={`shrink-0 px-3 py-1 rounded border ${copiedKey === `change-${i}`
-                                                        ? "border-green-500 text-green-400"
-                                                        : "border-red-500 text-red-400 hover:bg-red-500 hover:text-white"
-                                                        }`}
-                                                >
-                                                    {copiedKey === `change-${i}` ? "✓" : "Copy"}
-                                                </button>
+                                                <CopyButton
+                                                    copyKey={`change-${i}`}
+                                                    text={change.content || ""}
+                                                />
                                             </summary>
 
-                                            <pre className="p-3 overflow-auto text-xs text-neutral-300 max-h-[520px] border-t border-neutral-800">
+                                            <pre className="p-3 overflow-auto text-xs text-neutral-300 max-h-[520px] border-t border-neutral-800 whitespace-pre">
                                                 {change.content}
                                             </pre>
                                         </details>
@@ -381,17 +410,10 @@ export default function HomePage() {
                                                     {test.file} — {test.type} — {test.description}
                                                 </span>
 
-                                                <button
-                                                    type="button"
-                                                    onClick={(e) => {
-                                                        e.preventDefault();
-                                                        e.stopPropagation();
-                                                        copyToClipboard(test.content || "");
-                                                    }}
-                                                    className="shrink-0 px-3 py-1 rounded border border-red-500 text-red-400 hover:bg-red-500 hover:text-white"
-                                                >
-                                                    Copy
-                                                </button>
+                                                <CopyButton
+                                                    copyKey={`test-${i}`}
+                                                    text={test.content || ""}
+                                                />
                                             </summary>
 
                                             <pre className="p-3 overflow-auto text-xs text-neutral-300 max-h-[360px] border-t border-neutral-800 whitespace-pre">
@@ -405,8 +427,8 @@ export default function HomePage() {
 
                         {result.commands?.length > 0 && (
                             <div>
-                                <h3 className="font-semibold text-purple-400">Lệnh test đề xuất</h3>
-                                <pre className="bg-black rounded-lg p-3 text-sm">
+                                <h3 className="font-semibold text-purple-400">Lệnh đề xuất</h3>
+                                <pre className="bg-black rounded-lg p-3 text-sm max-h-[220px] overflow-auto whitespace-pre">
                                     {result.commands.join("\n")}
                                 </pre>
                             </div>
@@ -434,30 +456,32 @@ export default function HomePage() {
                                 Download ZIP
                             </button>
                         </div>
-                        {diffs.length > 0 && (
+
+                        {filteredDiffs.length > 0 && (
                             <div className="space-y-4">
                                 <h3 className="font-semibold text-yellow-400">Diff Preview</h3>
 
-                                {diffs.map((diff: any, index: number) => (
-                                    <div key={index} className="bg-black rounded-lg border border-neutral-800 overflow-hidden">
+                                {filteredDiffs.map((diff: any, index: number) => (
+                                    <div
+                                        key={index}
+                                        className="bg-black rounded-lg border border-neutral-800 overflow-hidden"
+                                    >
                                         <div className="px-4 py-2 bg-neutral-900 border-b border-neutral-800 font-semibold text-sm flex items-center justify-between gap-4">
                                             <span>{diff.file}</span>
 
-                                            <button
-                                                type="button"
-                                                onClick={() => copyToClipboard(buildDiffText(diff), `diff-${index}`)}
-                                                className={`shrink-0 px-3 py-1 rounded border ${copiedKey === `diff-${index}`
-                                                        ? "border-green-500 text-green-400"
-                                                        : "border-red-500 text-red-400 hover:bg-red-500 hover:text-white"
-                                                    }`}
-                                            >
-                                                {copiedKey === `diff-${index}` ? "✓" : "Copy"}
-                                            </button>
+                                            <CopyButton
+                                                copyKey={`diff-${index}`}
+                                                text={buildDiffText(diff)}
+                                            />
                                         </div>
 
                                         <pre className="p-4 overflow-auto text-xs leading-5 max-h-[520px] whitespace-pre">
-                                            {diff.parts.map((part: any, i: number) => {
-                                                const prefix = part.added ? "+ " : part.removed ? "- " : "  ";
+                                            {(diff.parts || []).map((part: any, i: number) => {
+                                                const prefix = part.added
+                                                    ? "+ "
+                                                    : part.removed
+                                                        ? "- "
+                                                        : "  ";
 
                                                 const className = part.added
                                                     ? "text-green-400"
@@ -465,12 +489,13 @@ export default function HomePage() {
                                                         ? "text-red-400"
                                                         : "text-neutral-400";
 
+                                                const lines = String(part.value || "").split("\n");
+
                                                 return (
                                                     <span key={i} className={className}>
-                                                        {part.value
-                                                            .split("\n")
+                                                        {lines
                                                             .map((line: string, lineIndex: number) =>
-                                                                line === "" && lineIndex === part.value.split("\n").length - 1
+                                                                line === "" && lineIndex === lines.length - 1
                                                                     ? ""
                                                                     : `${prefix}${line}\n`
                                                             )
