@@ -3,6 +3,16 @@ import { NextResponse } from "next/server";
 
 export async function POST(request: Request) {
     try {
+        if (!process.env.BLOB_READ_WRITE_TOKEN) {
+            return NextResponse.json(
+                {
+                    ok: false,
+                    error: "Missing BLOB_READ_WRITE_TOKEN. Hãy tạo Vercel Blob Storage và connect với project.",
+                },
+                { status: 500 }
+            );
+        }
+
         const body = (await request.json()) as HandleUploadBody;
 
         const jsonResponse = await handleUpload({
