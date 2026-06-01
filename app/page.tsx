@@ -415,14 +415,6 @@ export default function HomePage() {
                             </div>
                         )}
 
-                        {result.commands?.length > 0 && (
-                            <div>
-                                <h3 className="font-semibold text-purple-400">Lệnh đề xuất</h3>
-                                <pre className="bg-black rounded-lg p-3 text-sm max-h-[220px] overflow-auto whitespace-pre">
-                                    {result.commands.join("\n")}
-                                </pre>
-                            </div>
-                        )}
 
                         <div className="flex gap-3 flex-wrap">
                             <button
