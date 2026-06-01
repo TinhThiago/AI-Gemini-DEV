@@ -98,9 +98,15 @@ export default function HomePage() {
                 access: "public",
                 handleUploadUrl: "/api/blob-upload",
                 multipart: true,
+                clientPayload: JSON.stringify({
+                    filename: file.name,
+                    size: file.size,
+                    type: file.type || "unknown",
+                }),
                 onUploadProgress: ({ loaded, total, percentage }) => {
-                    console.log(`Upload progress: ${percentage}%`, loaded, total);
-                    setLoading(`Đang upload file lớn lên Vercel Blob... ${percentage.toFixed(0)}%`);
+                    setLoading(
+                        `Đang upload file lớn lên Vercel Blob... ${percentage.toFixed(0)}%`
+                    );
                 },
             });
 

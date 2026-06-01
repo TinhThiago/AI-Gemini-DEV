@@ -18,16 +18,21 @@ export async function POST(request: Request) {
         const jsonResponse = await handleUpload({
             body,
             request,
-            onBeforeGenerateToken: async () => {
+            token: process.env.BLOB_READ_WRITE_TOKEN,
+            onBeforeGenerateToken: async (pathname, clientPayload, multipart) => {
+                console.log("Generate Blob token:", {
+                    pathname,
+                    clientPayload,
+                    multipart,
+                });
+
                 return {
-                    allowedContentTypes: [
-                        "application/zip",
-                        "application/x-zip-compressed",
-                        "application/octet-stream",
-                    ],
                     maximumSizeInBytes: 500 * 1024 * 1024,
                     addRandomSuffix: true,
-                    tokenPayload: JSON.stringify({ type: "source-zip" }),
+                    tokenPayload: JSON.stringify({
+                        type: "source-zip",
+                        pathname,
+                    }),
                 };
             },
             onUploadCompleted: async ({ blob, tokenPayload }) => {
