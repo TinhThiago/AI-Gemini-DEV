@@ -365,21 +365,83 @@ export default function HomePage() {
                                         <details
                                             key={i}
                                             className="bg-black rounded-lg border border-neutral-800 overflow-hidden"
+                                            open={i === 0}
                                         >
-                                            <summary className="cursor-pointer p-3 flex items-start justify-between gap-4">
-                                                <span>
-                                                    {change.file} — {change.reason}
-                                                </span>
+                                            <summary className="cursor-pointer p-4 flex items-start justify-between gap-4 bg-neutral-950">
+                                                <div>
+                                                    <div className="font-semibold text-white">
+                                                        {change.file}
+                                                    </div>
 
-                                                <CopyButton
-                                                    copyKey={`change-${i}`}
-                                                    text={change.content || ""}
-                                                />
+                                                    <div className="text-sm text-yellow-300 mt-1">
+                                                        {change.title || change.reason || "File cần chỉnh sửa"}
+                                                    </div>
+                                                </div>
+
+                                                <button
+                                                    type="button"
+                                                    onClick={(e) => {
+                                                        e.preventDefault();
+                                                        e.stopPropagation();
+                                                        copyToClipboard(change.content || "", `change-${i}`);
+                                                    }}
+                                                    className={`shrink-0 px-3 py-1 rounded border ${copiedKey === `change-${i}`
+                                                            ? "border-green-500 text-green-400"
+                                                            : "border-red-500 text-red-400 hover:bg-red-500 hover:text-white"
+                                                        }`}
+                                                >
+                                                    {copiedKey === `change-${i}` ? "✓" : "Copy"}
+                                                </button>
                                             </summary>
 
-                                            <pre className="p-3 overflow-auto text-xs text-neutral-300 max-h-[520px] border-t border-neutral-800 whitespace-pre">
-                                                {change.content}
-                                            </pre>
+                                            <div className="p-4 border-t border-neutral-800 space-y-4">
+                                                <div className="bg-neutral-950 border border-neutral-800 rounded-lg p-4">
+                                                    <h4 className="font-semibold text-cyan-400 mb-2">
+                                                        Giải thích cần sửa
+                                                    </h4>
+
+                                                    <p className="text-sm text-neutral-200 leading-6 whitespace-pre-wrap">
+                                                        {change.reason || "Gemini chưa cung cấp giải thích chi tiết cho file này."}
+                                                    </p>
+                                                </div>
+
+                                                {Array.isArray(change.instructions) && change.instructions.length > 0 && (
+                                                    <div className="bg-neutral-950 border border-neutral-800 rounded-lg p-4">
+                                                        <h4 className="font-semibold text-green-400 mb-2">
+                                                            Các bước thực hiện
+                                                        </h4>
+
+                                                        <ol className="list-decimal list-inside space-y-2 text-sm text-neutral-200 leading-6">
+                                                            {change.instructions.map((step: string, stepIndex: number) => (
+                                                                <li key={stepIndex}>{step}</li>
+                                                            ))}
+                                                        </ol>
+                                                    </div>
+                                                )}
+
+                                                <div className="bg-neutral-950 border border-neutral-800 rounded-lg overflow-hidden">
+                                                    <div className="px-4 py-2 border-b border-neutral-800 text-sm font-semibold text-purple-300 flex items-center justify-between">
+                                                        <span>Code sau khi sửa</span>
+
+                                                        <button
+                                                            type="button"
+                                                            onClick={() =>
+                                                                copyToClipboard(change.content || "", `change-code-${i}`)
+                                                            }
+                                                            className={`shrink-0 px-3 py-1 rounded border ${copiedKey === `change-code-${i}`
+                                                                    ? "border-green-500 text-green-400"
+                                                                    : "border-red-500 text-red-400 hover:bg-red-500 hover:text-white"
+                                                                }`}
+                                                        >
+                                                            {copiedKey === `change-code-${i}` ? "✓" : "Copy"}
+                                                        </button>
+                                                    </div>
+
+                                                    <pre className="p-4 overflow-auto text-xs text-neutral-300 max-h-[520px] whitespace-pre">
+                                                        {change.content}
+                                                    </pre>
+                                                </div>
+                                            </div>
                                         </details>
                                     ))}
                                 </div>
